@@ -38,8 +38,8 @@ def create_annotation(
     """
     print(annotation_in)
     try:
-        annotation = crudAnnotation.annotations.create(db, obj_in=annotation_in)
-        return annotation
+            annotation = crudAnnotation.annotations.create(db, obj_in=annotation_in)
+            return annotation
     except OperationalError as error:
         print ("Oops! An exception has occured:", error)
         print ("Exception TYPE:", type(error))
