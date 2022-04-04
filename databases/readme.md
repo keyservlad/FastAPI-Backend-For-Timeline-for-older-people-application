@@ -12,7 +12,7 @@ PORT_SQL : 3306
 
 USERNAME_SQL : 262938
 
-PASSWORD_SQL : Sr25qzz4@nf36mB
+PASSWORD_SQL : Sr25qzz4nf36mB
 
 ## Postgres credentials
 
@@ -24,4 +24,4 @@ PORT_PG : 5432
 
 USERNAME_PG : sherbrooke
 
-PASSWORD_PG : Sr25qzz4@nf36mB
+PASSWORD_PG : Sr25qzz4nf36mB
