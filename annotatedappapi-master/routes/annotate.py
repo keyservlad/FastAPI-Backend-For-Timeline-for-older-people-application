@@ -12,6 +12,8 @@ from crud import crudAnnotation
 # import the error handling libraries for psycopg2
 from psycopg2 import OperationalError
 
+from fastapi import  HTTPException
+
 router = APIRouter()
 service = AnnotateQueryService()
 
@@ -39,6 +41,11 @@ def create_annotation(
     print(annotation_in)
     try:
             annotation = crudAnnotation.annotations.create(db, obj_in=annotation_in)
+            if not annotation:
+               raise HTTPException(
+                        status_code=400,
+                        detail="The annotation with this activity already exists in the system.",
+                        )
             return annotation
     except OperationalError as error:
         print ("Oops! An exception has occured:", error)
@@ -47,3 +54,17 @@ def create_annotation(
             "code":"505",
             "message":"Oops! An exception has occured:"
         }
+@router.delete("/{id}", response_model=AnnotationsCreate)
+def delete_annotation(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: int,
+) -> Any:
+    """
+    Delete an annotation.
+    """
+    annotation = crudAnnotation.annotations.get(db=db, id=id)
+    if not annotation:
+        raise HTTPException(status_code=404, detail="Annotation not found")
+    annotation = crudAnnotation.annotations.remove(db=db, id=id)
+    return annotation
