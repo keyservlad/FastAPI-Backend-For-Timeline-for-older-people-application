@@ -4,7 +4,7 @@ from services.annotate_query_services import AnnotateQueryService
 from models.annotate import Annotate
 from models.annoate_test import AnnotateTest
 from models.annotations import Annotations
-from schemas.annotations import AnnotationsCreate
+from schemas.annotations import AnnotationsCreate,AnnotationsUpdate
 from sqlalchemy.orm import Session
 from typing import Any
 from api import  deps
@@ -68,3 +68,20 @@ def delete_annotation(
         raise HTTPException(status_code=404, detail="Annotation not found")
     annotation = crudAnnotation.annotations.remove(db=db, id=id)
     return annotation
+
+    
+@router.put("/{id}", response_model=AnnotationsUpdate)
+def update_annotation(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: int,
+    annotation_in: AnnotationsUpdate,
+) -> Any:
+    """
+    Update an annotation.
+    """
+    item = crudAnnotation.annotations.get(db=db, id=id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Annotation not found")
+    item = crudAnnotation.annotations.update(db=db, db_obj=item, obj_in=annotation_in)
+    return item
