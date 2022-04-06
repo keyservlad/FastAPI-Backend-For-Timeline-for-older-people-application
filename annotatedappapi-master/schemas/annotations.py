@@ -25,3 +25,15 @@ class AnnotationsCreate(AnnotationsBase):
     
     class Config:
         orm_mode = True
+
+# Properties to receive via API on update
+class AnnotationsUpdate(AnnotationsBase):
+    home: str
+    room:str
+    start:datetime
+    end:datetime
+    activity_type:str
+    status:str
+    
+    class Config:
+        orm_mode = True

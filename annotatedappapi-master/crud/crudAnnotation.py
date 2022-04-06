@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 
 from crud.base import CRUDBase
 from models.annotations import Annotations
-from schemas.annotations import AnnotationsCreate
+from schemas.annotations import AnnotationsCreate,AnnotationsUpdate
 
-class CRUDAnnotations(CRUDBase[Annotations,AnnotationsCreate]):
+class CRUDAnnotations(CRUDBase[Annotations,AnnotationsCreate,AnnotationsUpdate]):
     def get_by_id(self, db: Session, *, id: str) -> Optional[Annotations]:
         return db.query(Annotations).filter(Annotations.id == id).first()
 
@@ -30,5 +30,7 @@ class CRUDAnnotations(CRUDBase[Annotations,AnnotationsCreate]):
         db.commit()
         db.refresh(db_obj)
         return db_obj
+
+    
 
 annotations = CRUDAnnotations(Annotations)
