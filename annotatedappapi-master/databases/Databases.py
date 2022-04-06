@@ -104,8 +104,7 @@ class MySQL(Database):
         mycursor.execute(sql, val)
 
         self.db_conn.commit()
-        
-        pass
+
 
     def readAnnotation(self, id: int):
         """
@@ -130,9 +129,8 @@ class MySQL(Database):
         
         mycursor.execute(sql, val)
         self.db_conn.commit()
-
         print(mycursor.rowcount, "record(s) affected")
-        pass
+        
     
     def deleteAnnotation(self, id: int):
         """
@@ -143,8 +141,7 @@ class MySQL(Database):
         param = (id, )
         mycursor.execute(sql, param)
         self.db_conn.commit()
-        # Implementation goes here.
-        pass
+       
 
 
 class PostgreSQL(Database):
