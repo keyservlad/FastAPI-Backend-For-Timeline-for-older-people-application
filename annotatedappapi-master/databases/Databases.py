@@ -175,6 +175,7 @@ class CSV(Database):
         print('path to csv database: ', path)
         # set fieldnames for csv file
         csvreader = csv.DictReader(open(path))
+        self.fieldnames = csvreader.fieldnames
         return path
 
     def createAnnotation(self, annotation: Annotate):
@@ -188,22 +189,20 @@ class CSV(Database):
 
         with open(self.db_conn, mode='a+', newline='') as csv_file:
             # check if annotation is already in the database by id
-            writer = csv.DictWriter(csv_file)
-            writer.writerow({'id': annotation.id, 'start': annotation.start, 'end': annotation.end, 'measure': 'activity', 'room': annotation.room, 'subject': annotation.subject, 'home': annotation.home})
+            writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
+            writer.writerow({'id': annotation.id, 'start': annotation.start, 'end': annotation.end, 'measurable': 'activity', 'room': annotation.room, 'subject': annotation.subject, 'home': annotation.home})
 
     def readAnnotation(self, id: int):
         """
         Read an annotation from the database, given its id.
         output = Annotation object if found, None if not found.
         """
-        #self closing operation
+        
         with open(self.db_conn, 'r') as csvfile:
             datareader = csv.DictReader(csvfile, delimiter=',')
             for row in datareader:
                 if int(row['id']) == id:
-                    print('Row found', row)
-                    annotation = Annotate(id=int(row['id']), start=row['start'], end=row['end'], room=row['room'], subject=row['subject'], home=row['home'])
-                    print('annotation found: ', annotation)
+                    Annotate(id=int(row['id']), start=row['start'], end=row['end'], room=row['room'], subject=row['subject'], home=row['home'])
                     return Annotate(id=int(row['id']), start=row['start'], end=row['end'], room=row['room'], subject=row['subject'], home=row['home'])
             return None
     
@@ -218,21 +217,36 @@ class CSV(Database):
         """
         Delete an annotation in the database, given its id.
         """
-        # Implementation goes here.
-        pass
 
+        # Add rows to a list, excluding the row with the id that was passed in.
+        kept_rows = []
+        with open(self.db_conn, mode='r+', newline='') as csvfile:
+            datareader = csv.DictReader(csvfile, delimiter=',')
+            for row in datareader:
+                if int(row['id']) != id:
+                    kept_rows.append(row)
+        
+        with open(self.db_conn, mode='w', newline='') as csvfile:
+            datawriter = csv.DictWriter(csvfile, fieldnames=self.fieldnames)
+            datawriter.writeheader()
+            datawriter.writerows(kept_rows)
+            
+        
+def generate_test_data():
+    db = CSV(database='playground_events')
+    for i in range(1, 5):
+        annotation = Annotate(
+            id=i,
+            start=datetime.datetime.now(),
+            end=datetime.datetime.now(),
+            room='exterior',
+            subject='rest',
+            home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088'
+        )
+        db.createAnnotation(annotation)
 
     
 if __name__ == '__main__':
-    
-    annotation = Annotate(
-        id=1,
-        start=datetime.datetime.now(),
-        end=datetime.datetime.now(),
-        room='exterior',
-        subject='rest',
-        home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088'
-    )
 
     db_connection = 'remote'
     if db_connection == 'local':
@@ -275,6 +289,16 @@ if __name__ == '__main__':
         # NOTE : CSV remove access is not implemented yet. It will search in the local filesystem.
         _csv = CSV('playground_events') 
 
-        _csv.createAnnotation(annotation)
-        # _csv.readAnnotation(annotation.id)
-
+        annotation = Annotate(
+        id=3,
+        start=datetime.datetime.now(),
+        end=datetime.datetime.now(),
+        room='exterior',
+        subject='rest',
+        home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088'
+    )
+        # _csv.createAnnotation(annotation)
+        # annotation = _csv.readAnnotation(annotation.id)
+        # print(annotation)
+        generate_test_data()
+        _csv.deleteAnnotation(1)
