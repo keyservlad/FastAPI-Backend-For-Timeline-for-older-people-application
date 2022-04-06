@@ -24,6 +24,8 @@ class Annotate:
     room: str
     subject: str
     home: str
+    status: str
+
 
 class Database(ABC):
     
@@ -94,14 +96,14 @@ class MySQL(Database):
         """
         Create an annotation in the database.
         """
-        end = datetime.datetime.fromtimestamp(annotation.end).strftime('%Y-%m-%d %H:%M:%S')
-        start = datetime.datetime.fromtimestamp(annotation.start).strftime('%Y-%m-%d %H:%M:%S')
-        mycursor = _mysql.cursor()
+        end = annotation.end.strftime('%Y-%m-%d %H:%M:%S')
+        start = annotation.start.strftime('%Y-%m-%d %H:%M:%S')
+        mycursor = self.db_conn.cursor()
         sql = "INSERT INTO annotations (home,start,end,room,activity_type,status) VALUES (%s,%s,%s,%s,%s,%s)"
-        val = (annotation.home, annotation.start, annotation.end, annotation.room, annotation.activity_type, annotation.status, )
+        val = (annotation.home, annotation.start, annotation.end, annotation.room, annotation.subject, annotation.status, )
         mycursor.execute(sql, val)
 
-        _mysql.commit()
+        self.db_conn.commit()
         
         pass
 
@@ -109,10 +111,10 @@ class MySQL(Database):
         """
         Read an annotation from the database, given its id.
         """
-        mycursor = _mysql.cursor()
-        sql = "SELECT * FROM annotations WHERE id = %d"
-        id = (id, )
-        mycursor.execute(sql, id)
+        mycursor = self.db_conn.cursor()
+        sql = "SELECT * FROM annotations WHERE id = %s"
+        param = (id, )
+        mycursor.execute(sql, param)
         myresult = mycursor.fetchall()
         return myresult
     
@@ -120,25 +122,27 @@ class MySQL(Database):
         """
         Update an annotation in the database, given its id and the new annotation
         """
-        end = datetime.datetime.fromtimestamp(annotation.end).strftime('%Y-%m-%d %H:%M:%S')
-        start = datetime.datetime.fromtimestamp(annotation.start).strftime('%Y-%m-%d %H:%M:%S')
-        mycursor = _mysql.cursor()
-        sql = "UPDATE customers SET home = %s, start = %s, end = %s, room = %s, activity_type = %s, status = %s WHERE id = %d"
-        val = (annotation.home, start, end, annotation.room, annotation.activity_type, annotation.status, annotation.id)
-        mycursor.execute(sql)
-        _mysql.commit()
-        # Implementation goes here.
+        end = annotation.end.strftime('%Y-%m-%d %H:%M:%S')
+        start = annotation.start.strftime('%Y-%m-%d %H:%M:%S')
+        mycursor = self.db_conn.cursor()
+        sql = "UPDATE annotations SET home = %s, start = %s, end = %s, room = %s, activity_type = %s, status = %s WHERE id = %s"
+        val = (annotation.home, start, end, annotation.room, annotation.subject, annotation.status, annotation.id, )
+        
+        mycursor.execute(sql, val)
+        self.db_conn.commit()
+
+        print(mycursor.rowcount, "record(s) affected")
         pass
     
     def deleteAnnotation(self, id: int):
         """
         Delete an annotation in the database, given its id.
         """
-        mycursor = _mysql.cursor()
-        sql = "DELETE FROM annotations WHERE id = %d"
-        id = (id, )
-        mycursor.execute(sql, id)
-        myresult = mycursor.fetchall()
+        mycursor = self.db_conn.cursor()
+        sql = "DELETE FROM annotations WHERE id = %s"
+        param = (id, )
+        mycursor.execute(sql, param)
+        self.db_conn.commit()
         # Implementation goes here.
         pass
 
@@ -295,35 +299,39 @@ if __name__ == '__main__':
         _csv = CSV('playground_events') 
     elif db_connection == 'remote':
 
-        # postgresql = PostgreSQL(
-        #     'sherbrooke_ift785_annotations', 
-        #     'postgresql-sherbrooke.alwaysdata.net',
-        #     '5432', 
-        #     'sherbrooke',
-        #     'Sr25qzz4nf36mB'
-        # )
+        postgresql = PostgreSQL(
+            'sherbrooke_ift785_annotations', 
+            'postgresql-sherbrooke.alwaysdata.net',
+            '5432', 
+            'sherbrooke',
+            'Sr25qzz4nf36mB'
+        )
 
-        # _mysql = MySQL(
-        #     'sherbrooke_ift785_annotations',
-        #     'mysql-sherbrooke.alwaysdata.net', 
-        #     '3306', 
-        #     '262938',
-        #     'Sr25qzz4nf36mB'
-        # )
+        _mysql = MySQL(
+            'sherbrooke_ift785_annotations',
+            'mysql-sherbrooke.alwaysdata.net', 
+            '3306', 
+            '262938',
+            'Sr25qzz4nf36mB'
+        )
 
         # NOTE : CSV remove access is not implemented yet. It will search in the local filesystem.
         _csv = CSV('playground_events') 
 
         annotation = Annotate(
-        id=3,
+        id=20,
         start=datetime.datetime.now(),
         end=datetime.datetime.now(),
         room='exterior',
         subject='rest',
-        home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088'
+        home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
+        status='test'
+
     )
         # _csv.createAnnotation(annotation)
         # annotation = _csv.readAnnotation(annotation.id)
         # print(annotation)
-        generate_test_data()
-        _csv.deleteAnnotation(1)
+        # generate_test_data()
+        # _csv.deleteAnnotation(1)
+        #_mysql.createAnnotation(annotation)
+
