@@ -8,6 +8,7 @@
 # PASSWORD_SQL : Sr25qzz4@nf36mB
 
 import string
+from turtle import st
 import psycopg2
 import mysql.connector
 import csv
@@ -93,20 +94,39 @@ class MySQL(Database):
         """
         Create an annotation in the database.
         """
-        # Implementation goes here.
+        end = datetime.datetime.fromtimestamp(annotation.end).strftime('%Y-%m-%d %H:%M:%S')
+        start = datetime.datetime.fromtimestamp(annotation.start).strftime('%Y-%m-%d %H:%M:%S')
+        mycursor = _mysql.cursor()
+        sql = "INSERT INTO annotations (home,start,end,room,activity_type,status) VALUES (%s,%s,%s,%s,%s,%s)"
+        val = (annotation.home, annotation.start, annotation.end, annotation.room, annotation.activity_type, annotation.status, )
+        mycursor.execute(sql, val)
+
+        _mysql.commit()
+        
         pass
 
     def readAnnotation(self, id: int):
         """
         Read an annotation from the database, given its id.
         """
-        # Implementation goes here.
-        pass
+        mycursor = _mysql.cursor()
+        sql = "SELECT * FROM annotations WHERE id = %d"
+        id = (id, )
+        mycursor.execute(sql, id)
+        myresult = mycursor.fetchall()
+        return myresult
     
     def updateAnnotation(self, id:int, annotation: Annotate):
         """
         Update an annotation in the database, given its id and the new annotation
         """
+        end = datetime.datetime.fromtimestamp(annotation.end).strftime('%Y-%m-%d %H:%M:%S')
+        start = datetime.datetime.fromtimestamp(annotation.start).strftime('%Y-%m-%d %H:%M:%S')
+        mycursor = _mysql.cursor()
+        sql = "UPDATE customers SET home = %s, start = %s, end = %s, room = %s, activity_type = %s, status = %s WHERE id = %d"
+        val = (annotation.home, start, end, annotation.room, annotation.activity_type, annotation.status, annotation.id)
+        mycursor.execute(sql)
+        _mysql.commit()
         # Implementation goes here.
         pass
     
@@ -114,6 +134,11 @@ class MySQL(Database):
         """
         Delete an annotation in the database, given its id.
         """
+        mycursor = _mysql.cursor()
+        sql = "DELETE FROM annotations WHERE id = %d"
+        id = (id, )
+        mycursor.execute(sql, id)
+        myresult = mycursor.fetchall()
         # Implementation goes here.
         pass
 
