@@ -3,14 +3,12 @@ from pydantic.dataclasses import dataclass
 
 @dataclass
 class Annotate:
+    id: int
+    start: datetime
+    end: datetime
+    room: str
+    subject: str
     home: str
-    item: str
-    start: int
-    end: int
-    answer: bool
-    observationsCount: int
-    firstObservationDate: datetime
-    lastObservationDate: datetime
 
 
     #def __repr__(self):

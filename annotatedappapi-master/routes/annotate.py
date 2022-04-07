@@ -1,7 +1,6 @@
 from turtle import home
 from fastapi import APIRouter,Depends
 from services.annotate_query_services import AnnotateQueryService
-from models.annotate import Annotate
 from models.annoate_test import AnnotateTest
 from models.annotations import Annotations
 from schemas.annotations import AnnotationsCreate,AnnotationsUpdate
@@ -84,4 +83,5 @@ def update_annotation(
     if not item:
         raise HTTPException(status_code=404, detail="Annotation not found")
     item = crudAnnotation.annotations.update(db=db, db_obj=item, obj_in=annotation_in)
+    return item
     return item
