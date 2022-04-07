@@ -7,14 +7,18 @@
 # USERNAME_SQL : 262938
 # PASSWORD_SQL : Sr25qzz4@nf36mB
 
-import string
-from turtle import st
 import psycopg2
 import mysql.connector
 import csv
 import datetime
 from abc import ABC, abstractmethod
 from pydantic.dataclasses import dataclass
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
+from fastapi.encoders import jsonable_encoder
+from ORM import Annotations
+# from models.annotate import Annotate
 
 @dataclass
 class Annotate:
@@ -24,9 +28,10 @@ class Annotate:
     room: str
     subject: str
     home: str
+    activity_type:str
     status: str
 
-class Database(ABC):
+class AccessDB(ABC):
     
     def __init__(self, database: str, host: str = None, port: str=None, username:str=None, password:str=None):
         self.database = database
@@ -73,7 +78,8 @@ class Database(ABC):
         """
         pass
 
-class MySQL(Database):
+
+class MySQL(AccessDB):
 
     def connect(self):
         """
@@ -138,7 +144,9 @@ class MySQL(Database):
         mycursor.execute(sql, param)
         self.db_conn.commit()
        
-class PostgreSQL(Database):
+
+
+class PostgreSQL(AccessDB):
 
     def connect(self):
         """
@@ -152,38 +160,91 @@ class PostgreSQL(Database):
             user=self.username,
             password=self.password
         )
-        print(pg)
         return pg
+
+    def get_db(self):
+        try:
+            engine = create_engine(f"postgresql://{self.username}:{self.password}@{self.host}/{self.database}", pool_pre_ping=True)
+            db = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+            return db()
+        finally:
+            db().close()
 
     def createAnnotation(self, annotation: Annotate):
         """
         Create an annotation in the database.
         """
         # Implementation goes here.
-        pass
+        db: Session = self.get_db()
+        obj = db.query(Annotations).order_by(Annotations.id.desc()).first()
+        if obj:
+            annotation.id=obj.id+1
+        else:
+            annotation.id=1
+
+        db_obj = Annotations(
+            id=annotation.id,
+            home=annotation.home,
+            room=annotation.room,
+            start=annotation.start,
+            end=annotation.end,
+            activity_type=annotation.activity_type,
+            status=annotation.status
+        )
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
 
     def readAnnotation(self, id: int):
         """
         Read an annotation from the database, given its id.
         """
         # Implementation goes here.
-        pass
+        db: Session = self.get_db()
+        item = db.query(Annotations).filter(Annotations.id == id).first()
+        return item
     
-    def updateAnnotation(self, id:int, annotation: Annotate):
+    def updateAnnotation(self, annotation: Annotate):
         """
         Update an annotation in the database, given its id and the new annotation
         """
         # Implementation goes here.
-        pass
+        db: Session = self.get_db()
+        item =  db.query(Annotations).filter(Annotations.id == annotation.id).first()
+        if not item:
+            print("Annotation not found")
+            return
+        obj_data = jsonable_encoder(item)
+        if isinstance(annotation, dict):
+            update_data = annotation
+        else:
+            update_data = annotation.dict(exclude_unset=True)
+        for field in obj_data:
+            if field in update_data:
+                setattr(item, field, update_data[field])
+        db.add(item)
+        db.commit()
+        db.refresh(item)
+        return item
     
     def deleteAnnotation(self, id: int):
         """
         Delete an annotation in the database, given its id.
         """
         # Implementation goes here.
-        pass
+        db: Session = self.get_db()
+        item =  db.query(Annotations).filter(Annotations.id == id).first()
+        if not item:
+            print("Annotation not found")
+            return
+        obj = db.query(Annotations).get(id)
+        db.delete(obj)
+        db.commit()
+        return obj
 
-class CSV(Database):
+class CSV(AccessDB):
+        
     
     def connect(self):
         """
@@ -263,28 +324,36 @@ class CSV(Database):
             datawriter = csv.DictWriter(csvfile, fieldnames=self.fieldnames)
             datawriter.writeheader()
             datawriter.writerows(kept_rows)
-        return 1
-        
-def generate_test_data(csv=True):
-    if csv:
-        db = CSV(database='playground_events')
-        for i in range(1, 5):
-            annotation = Annotate(
-                id=i,
-                start=datetime.datetime.now(),
-                end=datetime.datetime.now(),
-                room='exterior',
-                subject='rest',
-                home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
-                status='test'
-            )
-            db.createAnnotation(annotation)
- 
-if __name__ == '__main__':
+            
 
     db_connection = 'remote'
     if db_connection == 'local':
         
+def connect_databases(remote=True):
+
+    if remote:
+        postgresql = PostgreSQL(
+            'sherbrooke_ift785_annotations', 
+            'postgresql-sherbrooke.alwaysdata.net',
+            '5432', 
+            'sherbrooke',
+            'Sr25qzz4nf36mB'
+        )
+
+        _mysql = MySQL(
+           'sherbrooke_ift785_annotations',
+           'mysql-sherbrooke.alwaysdata.net', 
+           '3306', 
+            '262938',
+            'Sr25qzz4nf36mB'
+        )
+
+        # NOTE : CSV remove access is not implemented yet. It will search in the local filesystem.
+        _csv = CSV('playground_events')
+
+        return postgresql, _mysql, _csv
+    
+    else: 
         postgresql = PostgreSQL(
             'ift785', 
             'localhost', 
@@ -301,54 +370,80 @@ if __name__ == '__main__':
             'admin'
         )
         
-        _csv = CSV('playground_events') 
-    elif db_connection == 'remote':
+        _csv = CSV('playground_events')
 
-        postgresql = PostgreSQL(
-            'sherbrooke_ift785_annotations', 
-            'postgresql-sherbrooke.alwaysdata.net',
-            '5432', 
-            'sherbrooke',
-            'Sr25qzz4nf36mB'
-        )
+        return postgresql, _mysql, _csv
 
-        _mysql = MySQL(
-            'sherbrooke_ift785_annotations',
-            'mysql-sherbrooke.alwaysdata.net', 
-            '3306', 
-            '262938',
-            'Sr25qzz4nf36mB'
-        )
 
-        # NOTE : CSV remote access is not implemented yet. It will search in the local filesystem.
-        _csv = CSV('playground_events') 
-
-        # generate_test_data(csv=True)
-        
+def generate_test_data():
+    db = CSV(database='playground_events')
+    for i in range(1, 5):
         annotation = Annotate(
-        id=20,
-        start=datetime.datetime.now(),
-        end=datetime.datetime.now(),
-        room='exterior',
-        subject='rest',
-        home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
-        status='test'
+            id=i,
+            start=datetime.datetime.now(),
+            end=datetime.datetime.now(),
+            room='exterior',
+            subject='rest',
+            home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088'
         )
+        db.createAnnotation(annotation)
 
-        annotation2 = Annotate(
-        id=20,
-        start=datetime.datetime.now(),
-        end=datetime.datetime.now(),
-        room='interior',
-        subject='rest',
-        home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
-        status='test'
-        )
+def select_db(databases):
+    _input = input("Select a database to use: \n 0. PostgreSQL \n 1. MySQL \n 2. CSV \n")
+    try:
+        db = databases[_input]
+    except Exception as e:
+        print("Invalid input")
+        print(e)
+        return select_db(databases)
+    return db
 
-        # _csv.createAnnotation(annotation)
-        # annotation = _csv.readAnnotation(1)
-        # print(annotation)
-        # _csv.deleteAnnotation(1)
-        # _csv.updateAnnotation(annotation2)
-        #_mysql.createAnnotation(annotation)
+
+    
+if __name__ == '__main__':
+
+    annotation1 = Annotate(
+    id=101,
+    start=datetime.datetime.now(),
+    end=datetime.datetime.now(),
+    room='exterior',
+    subject='rest',
+    home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
+    status='test'
+    )
+
+    annotation2 = Annotate(
+    id=102,
+    start=datetime.datetime.now(),
+    end=datetime.datetime.now(),
+    room='interior',
+    subject='rest',
+    home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
+    status='test'
+    )
+
+    databases = connect_databases(remote=True)
+    while True:
+        db: AccessDB = select_db(databases)
+        print('Connected to database: ', db.type())
+
+        # Test requests
+        # create
+        input('Press any key to continue')
+        db.createAnnotation(annotation1)
+        db.createAnnotation(annotation2)
+
+        # read
+        input('Press any key to continue')
+        response = db.readAnnotation(annotation1.id)
+        print(response)
+
+        # update
+        input('Press any key to continue')
+        annotation2.status = 'updated'
+        db.updateAnnotation(annotation2)
+
+        # delete
+        input('Press any key to continue')
+        db.deleteAnnotation(annotation1.id)
 

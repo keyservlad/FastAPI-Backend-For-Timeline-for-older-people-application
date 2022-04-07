@@ -10,7 +10,6 @@ from pymongo.errors import OperationFailure
 from pymongo.collection import Collection
 
 from config.db import Settings
-from models.annotate import Annotate
 from schemas.annotate_schemas import annotate_serializer, annotates_serializer
 class ConfigurationException(Exception):
     def __init__(self, name: str):
