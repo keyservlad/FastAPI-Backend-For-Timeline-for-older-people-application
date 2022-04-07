@@ -78,7 +78,6 @@ class AccessDB(ABC):
         """
         pass
 
-
 class MySQL(AccessDB):
 
     def connect(self):
@@ -103,10 +102,9 @@ class MySQL(AccessDB):
         end = annotation.end.strftime('%Y-%m-%d %H:%M:%S')
         start = annotation.start.strftime('%Y-%m-%d %H:%M:%S')
         mycursor = self.db_conn.cursor()
-        sql = "INSERT INTO annotations (home,start,end,room,activity_type,status) VALUES (%s,%s,%s,%s,%s,%s)"
-        val = (annotation.home, annotation.start, annotation.end, annotation.room, annotation.subject, annotation.status, )
+        sql = "INSERT INTO annotations (id, home,start,end,room,activity_type,status) VALUES (%s, %s,%s,%s,%s,%s,%s)"
+        val = (annotation.id, annotation.home, annotation.start, annotation.end, annotation.room, annotation.subject, annotation.status, )
         mycursor.execute(sql, val)
-
         self.db_conn.commit()
 
     def readAnnotation(self, id: int):
@@ -117,7 +115,7 @@ class MySQL(AccessDB):
         sql = "SELECT * FROM annotations WHERE id = %s"
         param = (id, )
         mycursor.execute(sql, param)
-        myresult = mycursor.fetchall()
+        myresult = mycursor.fetchone()
         return myresult
     
     def updateAnnotation(self, annotation: Annotate):
@@ -143,8 +141,6 @@ class MySQL(AccessDB):
         param = (id, )
         mycursor.execute(sql, param)
         self.db_conn.commit()
-       
-
 
 class PostgreSQL(AccessDB):
 
@@ -160,6 +156,7 @@ class PostgreSQL(AccessDB):
             user=self.username,
             password=self.password
         )
+        print(pg)
         return pg
 
     def get_db(self):
@@ -245,13 +242,13 @@ class PostgreSQL(AccessDB):
 
 class CSV(AccessDB):
         
-    
     def connect(self):
         """
-        Baically just returns the database name, which should be the .csv file relative path.
+        Basically just returns the database name, which should be the .csv file relative path.
         output : database name as string.
         """
-        path = 'annotatedappapi-master/databases/' + self.database + '.csv'
+        
+        path = 'databases/' + self.database + '.csv'
         print('path to csv database: ', path)
         # set fieldnames for csv file
         csvreader = csv.DictReader(open(path))
@@ -271,7 +268,7 @@ class CSV(AccessDB):
         with open(self.db_conn, mode='a+', newline='') as csv_file:
             # check if annotation is already in the database by id
             writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
-            writer.writerow({'id': annotation.id, 'start': annotation.start, 'end': annotation.end, 'room': annotation.room, 'subject': annotation.subject, 'home': annotation.home, 'status': annotation.status})
+            writer.writerow({'id': annotation.id, 'start': annotation.start, 'end': annotation.end, 'room': annotation.room, 'subject': annotation.subject, 'home': annotation.home, 'activity_type': annotation.activity_type ,'status': annotation.status})
             return 1
 
     def readAnnotation(self, id: int):
@@ -284,7 +281,7 @@ class CSV(AccessDB):
             datareader = csv.DictReader(csvfile, delimiter=',')
             for row in datareader:
                 if int(row['id']) == id:
-                    return Annotate(id=int(row['id']), start=row['start'], end=row['end'], room=row['room'], subject=row['subject'], home=row['home'], status=row['status'])
+                    return Annotate(id=int(row['id']), start=row['start'], end=row['end'], room=row['room'], subject=row['subject'], home=row['home'], activity_type=row['activity_type'], status=row['status'])
             return None
     
     def updateAnnotation(self, annotation: Annotate):
@@ -324,10 +321,7 @@ class CSV(AccessDB):
             datawriter = csv.DictWriter(csvfile, fieldnames=self.fieldnames)
             datawriter.writeheader()
             datawriter.writerows(kept_rows)
-            
-
-    db_connection = 'remote'
-    if db_connection == 'local':
+        return 1
         
 def connect_databases(remote=True):
 
@@ -374,7 +368,6 @@ def connect_databases(remote=True):
 
         return postgresql, _mysql, _csv
 
-
 def generate_test_data():
     db = CSV(database='playground_events')
     for i in range(1, 5):
@@ -391,15 +384,13 @@ def generate_test_data():
 def select_db(databases):
     _input = input("Select a database to use: \n 0. PostgreSQL \n 1. MySQL \n 2. CSV \n")
     try:
-        db = databases[_input]
+        db = databases[int(_input)]
     except Exception as e:
         print("Invalid input")
         print(e)
         return select_db(databases)
     return db
 
-
-    
 if __name__ == '__main__':
 
     annotation1 = Annotate(
@@ -409,6 +400,7 @@ if __name__ == '__main__':
     room='exterior',
     subject='rest',
     home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
+    activity_type='hygiene',
     status='test'
     )
 
@@ -419,31 +411,35 @@ if __name__ == '__main__':
     room='interior',
     subject='rest',
     home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
+    activity_type='entertainment',
     status='test'
     )
 
     databases = connect_databases(remote=True)
     while True:
         db: AccessDB = select_db(databases)
-        print('Connected to database: ', db.type())
+        print('Connected to database: ', type(db).__name__)
 
         # Test requests
         # create
-        input('Press any key to continue')
+        input('Press any key to add data')
         db.createAnnotation(annotation1)
         db.createAnnotation(annotation2)
 
         # read
-        input('Press any key to continue')
+        input('Press any key to read data')
         response = db.readAnnotation(annotation1.id)
         print(response)
 
         # update
-        input('Press any key to continue')
+        input('Press any key to update data')
         annotation2.status = 'updated'
         db.updateAnnotation(annotation2)
 
         # delete
-        input('Press any key to continue')
+        input('Press any key to delete data')
         db.deleteAnnotation(annotation1.id)
+
+        input('Press any key to delete data')
+        db.deleteAnnotation(annotation2.id)
 

@@ -1,5 +1,1 @@
-id,start,end,room,subject,home,status
-2,2022-04-06 21:24:24.504021,2022-04-06 21:24:24.504021,exterior,rest,openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088,test
-3,2022-04-06 21:24:24.525088,2022-04-06 21:24:24.525088,exterior,rest,openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088,test
-4,2022-04-06 21:24:24.544911,2022-04-06 21:24:24.544911,exterior,rest,openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088,test
-20,2022-04-06 21:27:21.745889,2022-04-06 21:27:21.745889,interior,rest,openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088,test
+id,start,end,room,subject,home,activity_type,status
