@@ -13,13 +13,26 @@ import psycopg2
 import mysql.connector
 import csv
 import datetime
+from typing import Any,Generator
 from abc import ABC, abstractmethod
 from pydantic.dataclasses import dataclass
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from psycopg2 import OperationalError
-from crud import crudAnnotation
+from sqlalchemy.orm import Session
+from sqlalchemy import  Column, Integer, String,DateTime
+from sqlalchemy.ext.declarative import as_declarative, declared_attr
+from fastapi.encoders import jsonable_encoder
 
+
+@as_declarative()
+class Base:
+    id: Any
+    __name__: str
+    # Generate __tablename__ automatically
+    @declared_attr
+    def __tablename__(cls) -> str:
+        return cls.__name__.lower()
 @dataclass
 class Annotate:
     id: int
@@ -28,8 +41,18 @@ class Annotate:
     room: str
     subject: str
     home: str
+    activity_type:str
     status: str
 
+
+class Annotations(Base):
+    id = Column(Integer, primary_key=True, index=True)
+    home=  Column(String, index=False)
+    room = Column(String, index=False)
+    start= Column(DateTime, index=False)
+    end=Column(DateTime, index=False)
+    activity_type= Column(String, index=False)
+    status= Column(String, index=False)
 
 class Database(ABC):
     
@@ -162,38 +185,49 @@ class PostgreSQL(Database):
             user=self.username,
             password=self.password
         )
-        print(pg)
         return pg
 
     def get_db(self):
         try:
-            engine = create_engine(f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}", pool_pre_ping=True)
+            engine = create_engine(f"postgresql://{self.username}:{self.password}@{self.host}/{self.database}", pool_pre_ping=True)
             db = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-            return db 
+            return db()
         finally:
-            db.close()
+            db().close()
 
     def createAnnotation(self, annotation: Annotate):
         """
         Create an annotation in the database.
         """
         # Implementation goes here.
-        try:
-            annotation = crudAnnotation.annotations.create(self.get_db(), obj_in=annotation)
-            if not annotation:
-               return
-            return annotation
-        except OperationalError as error:
-            print ("Oops! An exception has occured:", error)
-            print ("Exception TYPE:", type(error))
-            return
+        db: Session = self.get_db()
+        obj = db.query(Annotations).order_by(Annotations.id.desc()).first()
+        if obj:
+            annotation.id=obj.id+1
+        else:
+            annotation.id=1
+
+        db_obj = Annotations(
+            id=annotation.id,
+            home=annotation.home,
+            room=annotation.room,
+            start=annotation.start,
+            end=annotation.end,
+            activity_type=annotation.activity_type,
+            status=annotation.status
+        )
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
 
     def readAnnotation(self, id: int):
         """
         Read an annotation from the database, given its id.
         """
         # Implementation goes here.
-        item = crudAnnotation.item.get(self.get_db(), id=id)
+        db: Session = self.get_db()
+        item = db.query(Annotations).filter(Annotations.id == id).first()
         return item
     
     def updateAnnotation(self, id:int, annotation: Annotate):
@@ -201,11 +235,22 @@ class PostgreSQL(Database):
         Update an annotation in the database, given its id and the new annotation
         """
         # Implementation goes here.
-        item = crudAnnotation.annotations.get(self.get_db(), id=id)
+        db: Session = self.get_db()
+        item =  db.query(Annotations).filter(Annotations.id == id).first()
         if not item:
             print("Annotation not found")
             return
-        item = crudAnnotation.annotations.update(self.get_db(), db_obj=item, obj_in=annotation)
+        obj_data = jsonable_encoder(item)
+        if isinstance(annotation, dict):
+            update_data = annotation
+        else:
+            update_data = annotation.dict(exclude_unset=True)
+        for field in obj_data:
+            if field in update_data:
+                setattr(item, field, update_data[field])
+        db.add(item)
+        db.commit()
+        db.refresh(item)
         return item
     
     def deleteAnnotation(self, id: int):
@@ -213,12 +258,15 @@ class PostgreSQL(Database):
         Delete an annotation in the database, given its id.
         """
         # Implementation goes here.
-        annotation = crudAnnotation.annotations.get(self.get_db(), id=id)
-        if not annotation:
+        db: Session = self.get_db()
+        item =  db.query(Annotations).filter(Annotations.id == id).first()
+        if not item:
             print("Annotation not found")
             return
-        annotation = crudAnnotation.annotations.remove(self.get_db(), id=id)
-        return annotation
+        obj = db.query(Annotations).get(id)
+        db.delete(obj)
+        db.commit()
+        return obj
 
 class CSV(Database):
         
@@ -335,16 +383,16 @@ if __name__ == '__main__':
             'Sr25qzz4nf36mB'
         )
 
-        _mysql = MySQL(
-            'sherbrooke_ift785_annotations',
-            'mysql-sherbrooke.alwaysdata.net', 
-            '3306', 
-            '262938',
-            'Sr25qzz4nf36mB'
-        )
+        #_mysql = MySQL(
+         #   'sherbrooke_ift785_annotations',
+          #  'mysql-sherbrooke.alwaysdata.net', 
+           # '3306', 
+            #'262938',
+            #'Sr25qzz4nf36mB'
+       # )
 
         # NOTE : CSV remove access is not implemented yet. It will search in the local filesystem.
-        _csv = CSV('playground_events') 
+        #_csv = CSV('playground_events') 
 
         annotation = Annotate(
         id=20,
@@ -353,6 +401,7 @@ if __name__ == '__main__':
         room='exterior',
         subject='rest',
         home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
+        activity_type='d2a088',
         status='test'
 
     )
@@ -362,5 +411,5 @@ if __name__ == '__main__':
         # generate_test_data()
         # _csv.deleteAnnotation(1)
         #_mysql.createAnnotation(annotation)
-        #postgresql.createAnnotation(annotation)
+        postgresql.deleteAnnotation(1)
 
