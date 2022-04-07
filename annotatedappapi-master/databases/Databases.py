@@ -26,7 +26,6 @@ class Annotate:
     home: str
     status: str
 
-
 class Database(ABC):
     
     def __init__(self, database: str, host: str = None, port: str=None, username:str=None, password:str=None):
@@ -61,7 +60,7 @@ class Database(ABC):
         pass
     
     @abstractmethod
-    def updateAnnotation(self, id:int, annotation: Annotate):
+    def updateAnnotation(self, annotation: Annotate):
         """
         Update an annotation in the database, given its id and the new annotation
         """
@@ -73,7 +72,6 @@ class Database(ABC):
         Delete an annotation in the database, given its id.
         """
         pass
-
 
 class MySQL(Database):
 
@@ -105,7 +103,6 @@ class MySQL(Database):
 
         self.db_conn.commit()
 
-
     def readAnnotation(self, id: int):
         """
         Read an annotation from the database, given its id.
@@ -117,7 +114,7 @@ class MySQL(Database):
         myresult = mycursor.fetchall()
         return myresult
     
-    def updateAnnotation(self, id:int, annotation: Annotate):
+    def updateAnnotation(self, annotation: Annotate):
         """
         Update an annotation in the database, given its id and the new annotation
         """
@@ -130,8 +127,7 @@ class MySQL(Database):
         mycursor.execute(sql, val)
         self.db_conn.commit()
         print(mycursor.rowcount, "record(s) affected")
-        
-    
+          
     def deleteAnnotation(self, id: int):
         """
         Delete an annotation in the database, given its id.
@@ -142,8 +138,6 @@ class MySQL(Database):
         mycursor.execute(sql, param)
         self.db_conn.commit()
        
-
-
 class PostgreSQL(Database):
 
     def connect(self):
@@ -190,7 +184,6 @@ class PostgreSQL(Database):
         pass
 
 class CSV(Database):
-        
     
     def connect(self):
         """
@@ -286,8 +279,7 @@ def generate_test_data(csv=True):
                 status='test'
             )
             db.createAnnotation(annotation)
-
-    
+ 
 if __name__ == '__main__':
 
     db_connection = 'remote'
