@@ -9,6 +9,7 @@ class Annotate:
     room: str
     subject: str
     home: str
+    status: str
 
 
     #def __repr__(self):
