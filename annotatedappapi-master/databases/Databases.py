@@ -181,16 +181,18 @@ class CSV(Database):
     def createAnnotation(self, annotation: Annotate):
         """
         Create an annotation in the database.
+        output : 1 if annotation doesnt exist, annotation if it already exists
         """
         # Check if the annotation already exists by id
         if self.readAnnotation(annotation.id) is not None:
             print('Annotation already exists')
-            return    
+            return self.readAnnotation(annotation.id)
 
         with open(self.db_conn, mode='a+', newline='') as csv_file:
             # check if annotation is already in the database by id
             writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
             writer.writerow({'id': annotation.id, 'start': annotation.start, 'end': annotation.end, 'measurable': 'activity', 'room': annotation.room, 'subject': annotation.subject, 'home': annotation.home})
+            return 1
 
     def readAnnotation(self, id: int):
         """
@@ -206,17 +208,30 @@ class CSV(Database):
                     return Annotate(id=int(row['id']), start=row['start'], end=row['end'], room=row['room'], subject=row['subject'], home=row['home'])
             return None
     
-    def updateAnnotation(self, id:int, annotation: Annotate):
+    def updateAnnotation(self, annotation: Annotate):
         """
-        Update an annotation in the database, given its id and the new annotation
+        Update an annotation in the databas
+        output = 1 if annotation is updated, 0 if not.
         """
-        # Implementation goes here.
-        pass
+
+        # delete annotation if exists
+        if self.deleteAnnotation(annotation.id) == 1:
+            # if dit has been delted, create new annotation
+            self.createAnnotation(annotation)
+            return 1
+        else:
+            print('Cannot update annotation, because annotation with id ', annotation.id,  ' not exist')
+            return 0
     
     def deleteAnnotation(self, id: int):
         """
         Delete an annotation in the database, given its id.
+        output = 1 if annotation is deleted, 0 if not.
         """
+        # check if annotation exists
+        if self.readAnnotation(id) == None:
+            print('Annotation does not exist')
+            return 0
 
         # Add rows to a list, excluding the row with the id that was passed in.
         kept_rows = []
@@ -230,7 +245,7 @@ class CSV(Database):
             datawriter = csv.DictWriter(csvfile, fieldnames=self.fieldnames)
             datawriter.writeheader()
             datawriter.writerows(kept_rows)
-            
+        return 1
         
 def generate_test_data():
     db = CSV(database='playground_events')
@@ -296,9 +311,18 @@ if __name__ == '__main__':
         room='exterior',
         subject='rest',
         home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088'
-    )
+        )
+        annotation2 = Annotate(
+        id=3,
+        start=datetime.datetime.now(),
+        end=datetime.datetime.now(),
+        room='interior',
+        subject='rest',
+        home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088'
+        )
+        
         # _csv.createAnnotation(annotation)
         # annotation = _csv.readAnnotation(annotation.id)
         # print(annotation)
         generate_test_data()
-        _csv.deleteAnnotation(1)
+        _csv.updateAnnotation(annotation2)
