@@ -217,7 +217,7 @@ class CSV(Database):
         with open(self.db_conn, mode='a+', newline='') as csv_file:
             # check if annotation is already in the database by id
             writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
-            writer.writerow({'id': annotation.id, 'start': annotation.start, 'end': annotation.end, 'measurable': 'activity', 'room': annotation.room, 'subject': annotation.subject, 'home': annotation.home})
+            writer.writerow({'id': annotation.id, 'start': annotation.start, 'end': annotation.end, 'room': annotation.room, 'subject': annotation.subject, 'home': annotation.home, 'status': annotation.status})
             return 1
 
     def readAnnotation(self, id: int):
@@ -230,8 +230,7 @@ class CSV(Database):
             datareader = csv.DictReader(csvfile, delimiter=',')
             for row in datareader:
                 if int(row['id']) == id:
-                    Annotate(id=int(row['id']), start=row['start'], end=row['end'], room=row['room'], subject=row['subject'], home=row['home'])
-                    return Annotate(id=int(row['id']), start=row['start'], end=row['end'], room=row['room'], subject=row['subject'], home=row['home'])
+                    return Annotate(id=int(row['id']), start=row['start'], end=row['end'], room=row['room'], subject=row['subject'], home=row['home'], status=row['status'])
             return None
     
     def updateAnnotation(self, annotation: Annotate):
@@ -273,18 +272,20 @@ class CSV(Database):
             datawriter.writerows(kept_rows)
         return 1
         
-def generate_test_data():
-    db = CSV(database='playground_events')
-    for i in range(1, 5):
-        annotation = Annotate(
-            id=i,
-            start=datetime.datetime.now(),
-            end=datetime.datetime.now(),
-            room='exterior',
-            subject='rest',
-            home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088'
-        )
-        db.createAnnotation(annotation)
+def generate_test_data(csv=True):
+    if csv:
+        db = CSV(database='playground_events')
+        for i in range(1, 5):
+            annotation = Annotate(
+                id=i,
+                start=datetime.datetime.now(),
+                end=datetime.datetime.now(),
+                room='exterior',
+                subject='rest',
+                home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
+                status='test'
+            )
+            db.createAnnotation(annotation)
 
     
 if __name__ == '__main__':
@@ -327,9 +328,11 @@ if __name__ == '__main__':
             'Sr25qzz4nf36mB'
         )
 
-        # NOTE : CSV remove access is not implemented yet. It will search in the local filesystem.
+        # NOTE : CSV remote access is not implemented yet. It will search in the local filesystem.
         _csv = CSV('playground_events') 
 
+        # generate_test_data(csv=True)
+        
         annotation = Annotate(
         id=20,
         start=datetime.datetime.now(),
@@ -338,12 +341,22 @@ if __name__ == '__main__':
         subject='rest',
         home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
         status='test'
+        )
 
-    )
+        annotation2 = Annotate(
+        id=20,
+        start=datetime.datetime.now(),
+        end=datetime.datetime.now(),
+        room='interior',
+        subject='rest',
+        home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
+        status='test'
+        )
+
         # _csv.createAnnotation(annotation)
-        # annotation = _csv.readAnnotation(annotation.id)
+        # annotation = _csv.readAnnotation(1)
         # print(annotation)
-        # generate_test_data()
         # _csv.deleteAnnotation(1)
+        # _csv.updateAnnotation(annotation2)
         #_mysql.createAnnotation(annotation)
 
