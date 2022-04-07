@@ -8,6 +8,7 @@
 # PASSWORD_SQL : Sr25qzz4@nf36mB
 
 import string
+from turtle import st
 import psycopg2
 import mysql.connector
 import csv
@@ -23,6 +24,8 @@ class Annotate:
     room: str
     subject: str
     home: str
+    status: str
+
 
 class Database(ABC):
     
@@ -93,29 +96,52 @@ class MySQL(Database):
         """
         Create an annotation in the database.
         """
-        # Implementation goes here.
-        pass
+        end = annotation.end.strftime('%Y-%m-%d %H:%M:%S')
+        start = annotation.start.strftime('%Y-%m-%d %H:%M:%S')
+        mycursor = self.db_conn.cursor()
+        sql = "INSERT INTO annotations (home,start,end,room,activity_type,status) VALUES (%s,%s,%s,%s,%s,%s)"
+        val = (annotation.home, annotation.start, annotation.end, annotation.room, annotation.subject, annotation.status, )
+        mycursor.execute(sql, val)
+
+        self.db_conn.commit()
+
 
     def readAnnotation(self, id: int):
         """
         Read an annotation from the database, given its id.
         """
-        # Implementation goes here.
-        pass
+        mycursor = self.db_conn.cursor()
+        sql = "SELECT * FROM annotations WHERE id = %s"
+        param = (id, )
+        mycursor.execute(sql, param)
+        myresult = mycursor.fetchall()
+        return myresult
     
     def updateAnnotation(self, id:int, annotation: Annotate):
         """
         Update an annotation in the database, given its id and the new annotation
         """
-        # Implementation goes here.
-        pass
+        end = annotation.end.strftime('%Y-%m-%d %H:%M:%S')
+        start = annotation.start.strftime('%Y-%m-%d %H:%M:%S')
+        mycursor = self.db_conn.cursor()
+        sql = "UPDATE annotations SET home = %s, start = %s, end = %s, room = %s, activity_type = %s, status = %s WHERE id = %s"
+        val = (annotation.home, start, end, annotation.room, annotation.subject, annotation.status, annotation.id, )
+        
+        mycursor.execute(sql, val)
+        self.db_conn.commit()
+        print(mycursor.rowcount, "record(s) affected")
+        
     
     def deleteAnnotation(self, id: int):
         """
         Delete an annotation in the database, given its id.
         """
-        # Implementation goes here.
-        pass
+        mycursor = self.db_conn.cursor()
+        sql = "DELETE FROM annotations WHERE id = %s"
+        param = (id, )
+        mycursor.execute(sql, param)
+        self.db_conn.commit()
+       
 
 
 class PostgreSQL(Database):
@@ -285,44 +311,39 @@ if __name__ == '__main__':
         _csv = CSV('playground_events') 
     elif db_connection == 'remote':
 
-        # postgresql = PostgreSQL(
-        #     'sherbrooke_ift785_annotations', 
-        #     'postgresql-sherbrooke.alwaysdata.net',
-        #     '5432', 
-        #     'sherbrooke',
-        #     'Sr25qzz4nf36mB'
-        # )
+        postgresql = PostgreSQL(
+            'sherbrooke_ift785_annotations', 
+            'postgresql-sherbrooke.alwaysdata.net',
+            '5432', 
+            'sherbrooke',
+            'Sr25qzz4nf36mB'
+        )
 
-        # _mysql = MySQL(
-        #     'sherbrooke_ift785_annotations',
-        #     'mysql-sherbrooke.alwaysdata.net', 
-        #     '3306', 
-        #     '262938',
-        #     'Sr25qzz4nf36mB'
-        # )
+        _mysql = MySQL(
+            'sherbrooke_ift785_annotations',
+            'mysql-sherbrooke.alwaysdata.net', 
+            '3306', 
+            '262938',
+            'Sr25qzz4nf36mB'
+        )
 
         # NOTE : CSV remove access is not implemented yet. It will search in the local filesystem.
         _csv = CSV('playground_events') 
 
         annotation = Annotate(
-        id=3,
+        id=20,
         start=datetime.datetime.now(),
         end=datetime.datetime.now(),
         room='exterior',
         subject='rest',
-        home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088'
-        )
-        annotation2 = Annotate(
-        id=3,
-        start=datetime.datetime.now(),
-        end=datetime.datetime.now(),
-        room='interior',
-        subject='rest',
-        home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088'
-        )
-        
+        home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
+        status='test'
+
+    )
         # _csv.createAnnotation(annotation)
         # annotation = _csv.readAnnotation(annotation.id)
         # print(annotation)
-        generate_test_data()
-        _csv.updateAnnotation(annotation2)
+        # generate_test_data()
+        # _csv.deleteAnnotation(1)
+        #_mysql.createAnnotation(annotation)
+

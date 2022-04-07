@@ -1,6 +1,6 @@
 create table annotations
 (
-    id bigint not null,
+    id bigint not null AUTO_INCREMENT,
     home varchar(255) not null,
     start timestamp not null,
     end timestamp not null,
