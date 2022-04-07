@@ -15,6 +15,10 @@ import csv
 import datetime
 from abc import ABC, abstractmethod
 from pydantic.dataclasses import dataclass
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from psycopg2 import OperationalError
+from crud import crudAnnotation
 
 @dataclass
 class Annotate:
@@ -161,33 +165,60 @@ class PostgreSQL(Database):
         print(pg)
         return pg
 
+    def get_db(self):
+        try:
+            engine = create_engine(f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}", pool_pre_ping=True)
+            db = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+            return db 
+        finally:
+            db.close()
+
     def createAnnotation(self, annotation: Annotate):
         """
         Create an annotation in the database.
         """
         # Implementation goes here.
-        pass
+        try:
+            annotation = crudAnnotation.annotations.create(self.get_db(), obj_in=annotation)
+            if not annotation:
+               return
+            return annotation
+        except OperationalError as error:
+            print ("Oops! An exception has occured:", error)
+            print ("Exception TYPE:", type(error))
+            return
 
     def readAnnotation(self, id: int):
         """
         Read an annotation from the database, given its id.
         """
         # Implementation goes here.
-        pass
+        item = crudAnnotation.item.get(self.get_db(), id=id)
+        return item
     
     def updateAnnotation(self, id:int, annotation: Annotate):
         """
         Update an annotation in the database, given its id and the new annotation
         """
         # Implementation goes here.
-        pass
+        item = crudAnnotation.annotations.get(self.get_db(), id=id)
+        if not item:
+            print("Annotation not found")
+            return
+        item = crudAnnotation.annotations.update(self.get_db(), db_obj=item, obj_in=annotation)
+        return item
     
     def deleteAnnotation(self, id: int):
         """
         Delete an annotation in the database, given its id.
         """
         # Implementation goes here.
-        pass
+        annotation = crudAnnotation.annotations.get(self.get_db(), id=id)
+        if not annotation:
+            print("Annotation not found")
+            return
+        annotation = crudAnnotation.annotations.remove(self.get_db(), id=id)
+        return annotation
 
 class CSV(Database):
         
@@ -331,4 +362,5 @@ if __name__ == '__main__':
         # generate_test_data()
         # _csv.deleteAnnotation(1)
         #_mysql.createAnnotation(annotation)
+        #postgresql.createAnnotation(annotation)
 

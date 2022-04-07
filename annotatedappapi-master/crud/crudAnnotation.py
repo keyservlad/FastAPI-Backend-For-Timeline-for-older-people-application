@@ -31,6 +31,4 @@ class CRUDAnnotations(CRUDBase[Annotations,AnnotationsCreate,AnnotationsUpdate])
         db.refresh(db_obj)
         return db_obj
 
-    
-
 annotations = CRUDAnnotations(Annotations)
