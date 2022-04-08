@@ -19,6 +19,8 @@ from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
 from ORM import Annotations
 # from models.annotate import Annotate
+from typing import TypeVar
+from pydantic import BaseModel
 
 @dataclass
 class Annotate:
@@ -30,6 +32,8 @@ class Annotate:
     home: str
     activity_type:str
     status: str
+
+UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 class AccessDB(ABC):
     
@@ -208,23 +212,22 @@ class PostgreSQL(AccessDB):
         """
         # Implementation goes here.
         db: Session = self.get_db()
+        print("item**** avant",annotation.id)
+
         item =  db.query(Annotations).filter(Annotations.id == annotation.id).first()
-        if not item:
+        if item is None:
             print("Annotation not found")
             return
-        obj_data = jsonable_encoder(item)
-        if isinstance(annotation, dict):
-            update_data = annotation
-        else:
-            update_data = annotation.dict(exclude_unset=True)
-        for field in obj_data:
-            if field in update_data:
-                setattr(item, field, update_data[field])
-        db.add(item)
+        item.id=annotation.id,
+        item.home=annotation.home,
+        item.room=annotation.room,
+        item.start=annotation.start,
+        item.end=annotation.end,
+        item.activity_type=annotation.activity_type,
+        item.status=annotation.status
         db.commit()
-        db.refresh(item)
         return item
-    
+
     def deleteAnnotation(self, id: int):
         """
         Delete an annotation in the database, given its id.
@@ -405,7 +408,7 @@ if __name__ == '__main__':
     )
 
     annotation2 = Annotate(
-    id=102,
+    id=44,
     start=datetime.datetime.now(),
     end=datetime.datetime.now(),
     room='interior',
@@ -423,8 +426,8 @@ if __name__ == '__main__':
         # Test requests
         # create
         input('Press any key to add data')
-        db.createAnnotation(annotation1)
-        db.createAnnotation(annotation2)
+       # db.createAnnotation(annotation1)
+       # db.createAnnotation(annotation2)
 
         # read
         input('Press any key to read data')
@@ -438,8 +441,8 @@ if __name__ == '__main__':
 
         # delete
         input('Press any key to delete data')
-        db.deleteAnnotation(annotation1.id)
+       # db.deleteAnnotation(annotation1.id)
 
         input('Press any key to delete data')
-        db.deleteAnnotation(annotation2.id)
+      #  db.deleteAnnotation(annotation2.id)
 

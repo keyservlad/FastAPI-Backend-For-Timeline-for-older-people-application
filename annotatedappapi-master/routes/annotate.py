@@ -2,16 +2,6 @@ from turtle import home
 from fastapi import APIRouter,Depends
 from services.annotate_query_services import AnnotateQueryService
 from models.annoate_test import AnnotateTest
-from models.annotations import Annotations
-from schemas.annotations import AnnotationsCreate,AnnotationsUpdate
-from sqlalchemy.orm import Session
-from typing import Any
-from api import  deps
-from crud import crudAnnotation
-# import the error handling libraries for psycopg2
-from psycopg2 import OperationalError
-
-from fastapi import  HTTPException
 
 router = APIRouter()
 service = AnnotateQueryService()
