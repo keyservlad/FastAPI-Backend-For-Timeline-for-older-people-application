@@ -82,6 +82,22 @@ class AccessDB(ABC):
         """
         pass
 
+class MongoDB(AccessDB):
+    def connect(self):
+        pass
+
+    def createAnnotation(self, annotation: Annotate):
+        pass
+
+    def readAnnotation(self, id: int):
+        pass
+
+    def updateAnnotation(self, annotation: Annotate):
+        pass
+
+    def deleteAnnotation(self, id: int):
+        pass
+
 class MySQL(AccessDB):
 
     def connect(self):

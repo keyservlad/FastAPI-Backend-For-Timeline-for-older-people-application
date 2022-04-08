@@ -25,3 +25,17 @@ PORT_PG : 5432
 USERNAME_PG : sherbrooke
 
 PASSWORD_PG : Sr25qzz4nf36mB
+
+
+## Postgres (Historique evenements)
+
+POSTGRES_USERNAME=annamasante_annotate
+
+POSTGRES_PWD=G2="T\r?aP'(x"
+
+POSTGRES_SERVER=postgresql-annamasante.alwaysdata.net
+
+POSTGRES_PORT=5432
+
+POSTGRES_DB=annamasante_annotate
+
