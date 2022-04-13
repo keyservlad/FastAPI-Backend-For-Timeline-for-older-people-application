@@ -1,4 +1,3 @@
-
 # ## MySQL credentials
 
 # DB_NAME_SQL : sherbrooke_ift785_annotations
@@ -36,10 +35,12 @@ class Annotate:
     start: datetime.datetime
     end: datetime.datetime
     room: str
-    subject: str
+    subject: str    # ne pas utiliser,va être supprimé 
     home: str
     activity_type:str
     status: str
+
+
 
 class AccessDB(ABC):
     
