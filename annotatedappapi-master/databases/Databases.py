@@ -23,6 +23,16 @@ import datetime as DT
 # from models.annotate import Annotate
 from typing import TypeVar
 from pydantic import BaseModel
+import pymongo
+from dateutil.tz import tzlocal, tzoffset
+from pymongo import MongoClient
+from pymongo.command_cursor import CommandCursor
+from pymongo.errors import OperationFailure
+from pymongo.collection import Collection
+import pymongo
+from config.db import Settings
+from models.annotate import Annotate
+from schemas.annotate_schemas import annotate_serializer, annotates_serializer
 
 
 @dataclass
@@ -95,21 +105,45 @@ class AccessDB(ABC):
 
 class MongoDB(AccessDB):
     def connect(self):
-        pass
+        client = pymongo.MongoClient("mongodb+srv://test1:gntestyes-F4f756@cluster0.rqf6z.mongodb.net/labellingapp?retryWrites=true&w=majority")
+
+        # client = pymongo.MongoClient(self.database)
+
+        self.annotate: Collection = client.home.annotate
+        self.collection_name = client.home["annotate"]
+        
 
     def createAnnotation(self, annotation: Annotate):
-        pass
+        _id = self.collection_name.insert_one(dict(annotation))
+        return annotates_serializer(self.annotate.find({"_id":_id.inserted_id}))
+
 
     def readAnnotation(self, id: int):
-        pass
+        pipeline = [
+            {
+                '$match': {'id': id}
+            },
+            {
+                '$group': {
+                    '_id': {'id': '$id', 'start': '$start', 'end': '$end', 'room': '$room', 'hoom': '$home', 'activity_type': '$activity_type', 'status': '$status'}
+                }
+            }
+        ]
+        try:
+            cursor: CommandCursor = self.annotate.aggregate(pipeline)
+            return (MongoDB.map_annotate(x) for x in cursor)
+        except OperationFailure as ex:
+            raise MongoDB(ex.details)
 
-    def updateAnnotation(self, annotation: Annotate):
-        pass
+    def updateAnnotation(self, annotate: Annotate):
+        home_entry  = self.collection_name.find_one({"id": int})
+        if home_entry:
+            self.collection_name.find_one_and_update({"id": annotate.id},{"$set":dict(annotate)})
+            return annotate_serializer(self.collection_name.find_one({"id":id}))
+        else:
+            return self.insert_home_annotate(annotate)
 
     def deleteAnnotation(self, id: int):
-        pass
-
-    def getAllByDay(self, date: str):
         pass
 
 class MySQL(AccessDB):
