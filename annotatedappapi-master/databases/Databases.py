@@ -7,6 +7,7 @@
 # USERNAME_SQL : 262938
 # PASSWORD_SQL : Sr25qzz4@nf36mB
 
+from ast import Str
 import psycopg2
 import mysql.connector
 import csv
@@ -32,6 +33,14 @@ class Annotate:
     activity_type: str
     status: str
 
+@dataclass
+class AnnotateEvent:
+    id: int
+    start:datetime.datetime
+    end: datetime.datetime
+    room: str
+    subject: str
+    home: str
 
 class AccessDB(ABC):
 
@@ -80,6 +89,13 @@ class AccessDB(ABC):
         """
         pass
 
+    @abstractmethod
+    def getAllByDay(self, date: str):
+        """
+        Get all annotations in the database, by date
+        """
+        pass
+
 
 class MongoDB(AccessDB):
     def connect(self):
@@ -97,6 +113,8 @@ class MongoDB(AccessDB):
     def deleteAnnotation(self, id: int):
         pass
 
+    def getAllByDay(self, date: str):
+        pass
 
 class MySQL(AccessDB):
 
@@ -163,6 +181,9 @@ class MySQL(AccessDB):
         param = (id, )
         mycursor.execute(sql, param)
         self.db_conn.commit()
+    
+    def getAllByDay(self, date: str):
+        pass
 
 
 class PostgreSQL(AccessDB):
@@ -202,7 +223,7 @@ class PostgreSQL(AccessDB):
             annotation.id = obj.id+1
         else:
             annotation.id = 1
-
+        
         db_obj = Annotations(
             id=annotation.id,
             home=annotation.home,
@@ -265,6 +286,8 @@ class PostgreSQL(AccessDB):
         db.commit()
         return obj
 
+    def getAllByDay(self, date: str):
+        pass
 
 class CSV(AccessDB):
 
@@ -273,11 +296,11 @@ class CSV(AccessDB):
         Basically just returns the database name, which should be the .csv file relative path.
         output : database name as string.
         """
-
-        path = 'databases/' + self.database + '.csv'
+        path = self.database+".csv"
+        #path = 'databases/' + self.database + '.csv'
         print('path to csv database: ', path)
         # set fieldnames for csv file
-        csvreader = csv.DictReader(open(path))
+        csvreader = csv.DictReader(open("events.csv"))
         self.fieldnames = csvreader.fieldnames
         return path
 
@@ -290,10 +313,10 @@ class CSV(AccessDB):
         if self.readAnnotation(annotation.id) is not None:
             print('Annotation already exists')
             return self.readAnnotation(annotation.id)
-
         with open(self.db_conn, mode='a+', newline='') as csv_file:
             # check if annotation is already in the database by id
             writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
+            print(annotation.activity_type)
             writer.writerow({'id': annotation.id, 'start': annotation.start, 'end': annotation.end, 'room': annotation.room,
                             'subject': annotation.subject, 'home': annotation.home, 'activity_type': annotation.activity_type, 'status': annotation.status})
             return 1
@@ -351,6 +374,15 @@ class CSV(AccessDB):
             datawriter.writerows(kept_rows)
         return 1
 
+    def getAllByDay(self, date):
+        all_annotate = []
+        with open(self.db_conn, 'r') as csvfile:
+            datareader = csv.DictReader(csvfile, delimiter=',')
+            for row in datareader:
+                row_date = row["start"].split(" ")[0]
+                if(date == row_date):
+                    all_annotate.append(AnnotateEvent(id=int(row['id']), start=row['start'], end=row['end'], room=row['room'], subject=row['subject'], home=row['home']))
+            return all_annotate
 
 def connect_databases(remote=True):
 
@@ -372,7 +404,7 @@ def connect_databases(remote=True):
         )
 
         # NOTE : CSV remove access is not implemented yet. It will search in the local filesystem.
-        _csv = CSV('playground_events')
+        _csv = CSV('events')
 
         return postgresql, _mysql, _csv
 
@@ -426,6 +458,7 @@ def select_db(databases):
 
 if __name__ == '__main__':
 
+
     annotation1 = Annotate(
         id=101,
         start=datetime.datetime.now(),
@@ -453,12 +486,13 @@ if __name__ == '__main__':
         db: AccessDB = select_db(databases)
         print('Connected to database: ', type(db).__name__)
 
-        # Test requests
-        # create
+        l = db.getAllByDay("2021-02-23")
+
         input('Press any key to add data')
         db.createAnnotation(annotation1)
         db.createAnnotation(annotation2)
 
+        
         # read
         input('Press any key to read data')
         response = db.readAnnotation(annotation1.id)
@@ -475,3 +509,5 @@ if __name__ == '__main__':
 
         input('Press any key to delete data')
         db.deleteAnnotation(annotation2.id)
+        print(len(l))
+

@@ -5,4 +5,8 @@ databases/sensorsupdates.csv
 annotatedappapi-master/.idea/modules.xml
 annotatedappapi-master/.idea/dataSources.xml
 annotatedappapi-master/.idea/annotatedappapi-master.iml
-env
+.env
+.vscode
+.git
+.idea
+.vs
