@@ -120,13 +120,13 @@ class MongoDB(AccessDB):
         except OperationFailure as ex:
             raise MongoDB(ex.details)
 
-    def updateAnnotation(self, id : int, annoate: Annotate):
+    def updateAnnotation(self, annotate: Annotate):
         home_entry  = self.collection_name.find_one({"id": int})
         if home_entry:
-            self.collection_name.find_one_and_update({"id": id},{"$set":dict(annoate)})
+            self.collection_name.find_one_and_update({"id": annotate.id},{"$set":dict(annotate)})
             return annotate_serializer(self.collection_name.find_one({"id":id}))
         else:
-            return self.insert_home_annotate(annoate)
+            return self.insert_home_annotate(annotate)
 
     def deleteAnnotation(self, id: int):
         pass
