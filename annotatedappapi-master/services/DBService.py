@@ -42,4 +42,15 @@ class DBService:
             self.accessDB.deleteAnnotation(annotation)
         except Exception as e:
             print(e)
+
+    def getAnnotationsOfADay(self, date):
+        """
+        Access all the annotation events of a day
+        """
+        try :
+            self.accessDB.getAllByDay(self, date)
+        except Exception as e:
+            print(e)
+        
+
     

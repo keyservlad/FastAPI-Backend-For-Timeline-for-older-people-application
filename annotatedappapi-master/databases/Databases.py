@@ -33,15 +33,6 @@ class Annotate:
     activity_type: str
     status: str
 
-@dataclass
-class AnnotateEvent:
-    id: int
-    start:datetime.datetime
-    end: datetime.datetime
-    room: str
-    subject: str
-    home: str
-
 class AccessDB(ABC):
 
     def __init__(self, database: str, host: str = None, port: str = None, username: str = None, password: str = None):
@@ -381,7 +372,7 @@ class CSV(AccessDB):
             for row in datareader:
                 row_date = row["start"].split(" ")[0]
                 if(date == row_date):
-                    all_annotate.append(AnnotateEvent(id=int(row['id']), start=row['start'], end=row['end'], room=row['room'], subject=row['subject'], home=row['home']))
+                    all_annotate.append(Annotate(id=int(row['id']), start=row['start'], end=row['end'], room=row['room'], subject=row['subject'], home=row['home'], activity_type="", status=""))
             return all_annotate
 
 def connect_databases(remote=True):
@@ -488,26 +479,27 @@ if __name__ == '__main__':
 
         l = db.getAllByDay("2021-02-23")
 
-        input('Press any key to add data')
-        db.createAnnotation(annotation1)
-        db.createAnnotation(annotation2)
+        # input('Press any key to add data')
+        # db.createAnnotation(annotation1)
+        # db.createAnnotation(annotation2)
 
         
-        # read
-        input('Press any key to read data')
-        response = db.readAnnotation(annotation1.id)
-        print(response)
+        # # read
+        # input('Press any key to read data')
+        # response = db.readAnnotation(annotation1.id)
+        # print(response)
 
-        # update
-        input('Press any key to update data')
-        annotation2.status = 'updated'
-        db.updateAnnotation(annotation2)
+        # # update
+        # input('Press any key to update data')
+        # annotation2.status = 'updated'
+        # db.updateAnnotation(annotation2)
 
-        # delete
-        input('Press any key to delete data')
-        db.deleteAnnotation(annotation1.id)
+        # # delete
+        # input('Press any key to delete data')
+        # db.deleteAnnotation(annotation1.id)
 
-        input('Press any key to delete data')
-        db.deleteAnnotation(annotation2.id)
+        # input('Press any key to delete data')
+        # db.deleteAnnotation(annotation2.id)
+        print(l)
         print(len(l))
 

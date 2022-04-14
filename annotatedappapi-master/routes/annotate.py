@@ -21,6 +21,10 @@ service = AnnotateQueryService()
 def get_home_annoate(home:str):
     return service.get_home_annotate(home)
 
+@router.get('/annotateEvent/day')
+def get_home_annoate(home:str):
+    return service.get_home_annotate(home)
+
 @router.post('/create')
 async def insert_home_annoate(annotate:AnnotateTest):
     return service.insert_home_annotate(annotate)
