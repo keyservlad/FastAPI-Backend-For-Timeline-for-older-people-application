@@ -1,4 +1,3 @@
-
 # ## MySQL credentials
 
 # DB_NAME_SQL : sherbrooke_ift785_annotations
@@ -36,10 +35,12 @@ class Annotate:
     start: datetime.datetime
     end: datetime.datetime
     room: str
-    subject: str
+    subject: str    # ne pas utiliser,va être supprimé 
     home: str
     activity_type:str
     status: str
+
+
 
 class AccessDB(ABC):
     
@@ -92,8 +93,10 @@ class MongoDB(AccessDB):
     def connect(self):
         client = pymongo.MongoClient("mongodb+srv://test1:gntestyes-F4f756@cluster0.rqf6z.mongodb.net/labellingapp?retryWrites=true&w=majority")
 
-        self.annotate: Collection = client.labellingapp.annotateapp
-        self.collection_name = client.labellingapp["annotateapp"]
+        # client = pymongo.MongoClient(self.database)
+
+        self.annotate: Collection = client.home.annotate
+        self.collection_name = client.home["annotate"]
         
 
     def createAnnotation(self, annotation: Annotate):
@@ -101,17 +104,14 @@ class MongoDB(AccessDB):
         return annotates_serializer(self.annotate.find({"_id":_id.inserted_id}))
 
 
-    def readAnnotation(self, home: str):
+    def readAnnotation(self, id: int):
         pipeline = [
             {
-                '$match': {'home': home}
+                '$match': {'id': id}
             },
             {
                 '$group': {
-                    '_id': {'home': '$home', 'item': '$item', 'start': '$start', 'end': '$end', 'answer': '$answer'},
-                    'observations_count': {'$sum': 1},
-                    'first_observation_date': {'$min': '$sentAt'},
-                    'last_observation_date': {'$max': '$sentAt'}
+                    '_id': {'id': '$id', 'start': '$start', 'end': '$end', 'room': '$room', 'hoom': '$home', 'activity_type': '$activity_type', 'status': '$status'}
                 }
             }
         ]
@@ -121,11 +121,11 @@ class MongoDB(AccessDB):
         except OperationFailure as ex:
             raise MongoDB(ex.details)
 
-    def updateAnnotation(self, home : str, start : int, end : int, annoate: Annotate):
-        home_entry  = self.collection_name.find_one({"home": home, "start": start, "end":end})
+    def updateAnnotation(self, id : int, annoate: Annotate):
+        home_entry  = self.collection_name.find_one({"id": int})
         if home_entry:
-            self.collection_name.find_one_and_update({"home": home},{"$set":dict(annoate)})
-            return annotate_serializer(self.collection_name.find_one({"home":home}))
+            self.collection_name.find_one_and_update({"id": id},{"$set":dict(annoate)})
+            return annotate_serializer(self.collection_name.find_one({"id":id}))
         else:
             return self.insert_home_annotate(annoate)
 
