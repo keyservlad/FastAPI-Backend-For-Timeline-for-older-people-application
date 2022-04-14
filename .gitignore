@@ -4,3 +4,6 @@ databases/events.csv
 databases/sensorsupdates.csv
 env
 annotatedappapi-master/.idea
+.vs
+.idea
+.git.vscode.env

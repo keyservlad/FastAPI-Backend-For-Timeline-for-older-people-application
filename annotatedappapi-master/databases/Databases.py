@@ -7,6 +7,7 @@
 # USERNAME_SQL : 262938
 # PASSWORD_SQL : Sr25qzz4@nf36mB
 
+from ast import Str
 import psycopg2
 import mysql.connector
 import csv
@@ -18,9 +19,11 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
 from ORM import Annotations
+import datetime as DT
 # from models.annotate import Annotate
 from typing import TypeVar
 from pydantic import BaseModel
+
 
 @dataclass
 class Annotate:
@@ -30,14 +33,14 @@ class Annotate:
     room: str
     subject: str
     home: str
-    activity_type:str
+    activity_type: str
     status: str
 
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 class AccessDB(ABC):
-    
-    def __init__(self, database: str, host: str = None, port: str=None, username:str=None, password:str=None):
+
+    def __init__(self, database: str, host: str = None, port: str = None, username: str = None, password: str = None):
         self.database = database
         self.host = host
         self.port = port
@@ -67,20 +70,28 @@ class AccessDB(ABC):
         Read an annotation from the database, given its id.
         """
         pass
-    
+
     @abstractmethod
     def updateAnnotation(self, annotation: Annotate):
         """
         Update an annotation in the database, given its id and the new annotation
         """
         pass
-    
+
     @abstractmethod
     def deleteAnnotation(self, id: int):
         """
         Delete an annotation in the database, given its id.
         """
         pass
+
+    @abstractmethod
+    def getAllByDay(self, date: str):
+        """
+        Get all annotations in the database, by date
+        """
+        pass
+
 
 class MongoDB(AccessDB):
     def connect(self):
@@ -96,6 +107,9 @@ class MongoDB(AccessDB):
         pass
 
     def deleteAnnotation(self, id: int):
+        pass
+
+    def getAllByDay(self, date: str):
         pass
 
 class MySQL(AccessDB):
@@ -123,7 +137,8 @@ class MySQL(AccessDB):
         start = annotation.start.strftime('%Y-%m-%d %H:%M:%S')
         mycursor = self.db_conn.cursor()
         sql = "INSERT INTO annotations (id, home,start,end,room,activity_type,status) VALUES (%s, %s,%s,%s,%s,%s,%s)"
-        val = (annotation.id, annotation.home, annotation.start, annotation.end, annotation.room, annotation.subject, annotation.status, )
+        val = (annotation.id, annotation.home, annotation.start, annotation.end,
+               annotation.room, annotation.subject, annotation.status, )
         mycursor.execute(sql, val)
         self.db_conn.commit()
 
@@ -137,7 +152,7 @@ class MySQL(AccessDB):
         mycursor.execute(sql, param)
         myresult = mycursor.fetchone()
         return myresult
-    
+
     def updateAnnotation(self, annotation: Annotate):
         """
         Update an annotation in the database, given its id and the new annotation
@@ -146,12 +161,13 @@ class MySQL(AccessDB):
         start = annotation.start.strftime('%Y-%m-%d %H:%M:%S')
         mycursor = self.db_conn.cursor()
         sql = "UPDATE annotations SET home = %s, start = %s, end = %s, room = %s, activity_type = %s, status = %s WHERE id = %s"
-        val = (annotation.home, start, end, annotation.room, annotation.subject, annotation.status, annotation.id, )
-        
+        val = (annotation.home, start, end, annotation.room,
+               annotation.subject, annotation.status, annotation.id, )
+
         mycursor.execute(sql, val)
         self.db_conn.commit()
         print(mycursor.rowcount, "record(s) affected")
-          
+
     def deleteAnnotation(self, id: int):
         """
         Delete an annotation in the database, given its id.
@@ -161,6 +177,10 @@ class MySQL(AccessDB):
         param = (id, )
         mycursor.execute(sql, param)
         self.db_conn.commit()
+    
+    def getAllByDay(self, date: str):
+        pass
+
 
 class PostgreSQL(AccessDB):
 
@@ -181,7 +201,8 @@ class PostgreSQL(AccessDB):
 
     def get_db(self):
         try:
-            engine = create_engine(f"postgresql://{self.username}:{self.password}@{self.host}/{self.database}", pool_pre_ping=True)
+            engine = create_engine(
+                f"postgresql://{self.username}:{self.password}@{self.host}/{self.database}", pool_pre_ping=True)
             db = sessionmaker(autocommit=False, autoflush=False, bind=engine)
             return db()
         finally:
@@ -195,10 +216,10 @@ class PostgreSQL(AccessDB):
         db: Session = self.get_db()
         obj = db.query(Annotations).order_by(Annotations.id.desc()).first()
         if obj:
-            annotation.id=obj.id+1
+            annotation.id = obj.id+1
         else:
-            annotation.id=1
-
+            annotation.id = 1
+        
         db_obj = Annotations(
             id=annotation.id,
             home=annotation.home,
@@ -221,17 +242,16 @@ class PostgreSQL(AccessDB):
         db: Session = self.get_db()
         item = db.query(Annotations).filter(Annotations.id == id).first()
         return item
-    
+
     def updateAnnotation(self, annotation: Annotate):
         """
         Update an annotation in the database, given its id and the new annotation
         """
         # Implementation goes here.
         db: Session = self.get_db()
-        print("item**** avant",annotation.id)
-
-        item =  db.query(Annotations).filter(Annotations.id == annotation.id).first()
-        if item is None:
+        item = db.query(Annotations).filter(
+            Annotations.id == annotation.id).first()
+        if not item:
             print("Annotation not found")
             return
         item.id=annotation.id,
@@ -250,7 +270,7 @@ class PostgreSQL(AccessDB):
         """
         # Implementation goes here.
         db: Session = self.get_db()
-        item =  db.query(Annotations).filter(Annotations.id == id).first()
+        item = db.query(Annotations).filter(Annotations.id == id).first()
         if not item:
             print("Annotation not found")
             return
@@ -259,18 +279,21 @@ class PostgreSQL(AccessDB):
         db.commit()
         return obj
 
+    def getAllByDay(self, date: str):
+        pass
+
 class CSV(AccessDB):
-        
+
     def connect(self):
         """
         Basically just returns the database name, which should be the .csv file relative path.
         output : database name as string.
         """
-        
-        path = 'databases/' + self.database + '.csv'
+        path = self.database+".csv"
+        #path = 'databases/' + self.database + '.csv'
         print('path to csv database: ', path)
         # set fieldnames for csv file
-        csvreader = csv.DictReader(open(path))
+        csvreader = csv.DictReader(open("events.csv"))
         self.fieldnames = csvreader.fieldnames
         return path
 
@@ -283,11 +306,12 @@ class CSV(AccessDB):
         if self.readAnnotation(annotation.id) is not None:
             print('Annotation already exists')
             return self.readAnnotation(annotation.id)
-
         with open(self.db_conn, mode='a+', newline='') as csv_file:
             # check if annotation is already in the database by id
             writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
-            writer.writerow({'id': annotation.id, 'start': annotation.start, 'end': annotation.end, 'room': annotation.room, 'subject': annotation.subject, 'home': annotation.home, 'activity_type': annotation.activity_type ,'status': annotation.status})
+            print(annotation.activity_type)
+            writer.writerow({'id': annotation.id, 'start': annotation.start, 'end': annotation.end, 'room': annotation.room,
+                            'subject': annotation.subject, 'home': annotation.home, 'activity_type': annotation.activity_type, 'status': annotation.status})
             return 1
 
     def readAnnotation(self, id: int):
@@ -295,14 +319,14 @@ class CSV(AccessDB):
         Read an annotation from the database, given its id.
         output = Annotation object if found, None if not found.
         """
-        
+
         with open(self.db_conn, 'r') as csvfile:
             datareader = csv.DictReader(csvfile, delimiter=',')
             for row in datareader:
                 if int(row['id']) == id:
                     return Annotate(id=int(row['id']), start=row['start'], end=row['end'], room=row['room'], subject=row['subject'], home=row['home'], activity_type=row['activity_type'], status=row['status'])
             return None
-    
+
     def updateAnnotation(self, annotation: Annotate):
         """
         Update an annotation in the databas
@@ -315,9 +339,10 @@ class CSV(AccessDB):
             self.createAnnotation(annotation)
             return 1
         else:
-            print('Cannot update annotation, because annotation with id ', annotation.id,  ' not exist')
+            print('Cannot update annotation, because annotation with id ',
+                  annotation.id,  ' not exist')
             return 0
-    
+
     def deleteAnnotation(self, id: int):
         """
         Delete an annotation in the database, given its id.
@@ -335,57 +360,68 @@ class CSV(AccessDB):
             for row in datareader:
                 if int(row['id']) != id:
                     kept_rows.append(row)
-        
+
         with open(self.db_conn, mode='w', newline='') as csvfile:
             datawriter = csv.DictWriter(csvfile, fieldnames=self.fieldnames)
             datawriter.writeheader()
             datawriter.writerows(kept_rows)
         return 1
-        
+
+    def getAllByDay(self, date):
+        all_annotate = []
+        with open(self.db_conn, 'r') as csvfile:
+            datareader = csv.DictReader(csvfile, delimiter=',')
+            for row in datareader:
+                row_date = row["start"].split(" ")[0]
+                if(date == row_date):
+                    all_annotate.append(Annotate(id=int(row['id']), start=row['start'], end=row['end'], room=row['room'], subject=row['subject'], home=row['home'], activity_type="", status=""))
+            return all_annotate
+
 def connect_databases(remote=True):
 
     if remote:
         postgresql = PostgreSQL(
-            'sherbrooke_ift785_annotations', 
+            'sherbrooke_ift785_annotations',
             'postgresql-sherbrooke.alwaysdata.net',
-            '5432', 
+            '5432',
             'sherbrooke',
             'Sr25qzz4nf36mB'
         )
 
         _mysql = MySQL(
-           'sherbrooke_ift785_annotations',
-           'mysql-sherbrooke.alwaysdata.net', 
-           '3306', 
+            'sherbrooke_ift785_annotations',
+            'mysql-sherbrooke.alwaysdata.net',
+            '3306',
             '262938',
             'Sr25qzz4nf36mB'
         )
 
         # NOTE : CSV remove access is not implemented yet. It will search in the local filesystem.
-        _csv = CSV('playground_events')
+        _csv = CSV('events')
 
         return postgresql, _mysql, _csv
-    
-    else: 
+
+    else:
         postgresql = PostgreSQL(
-            'ift785', 
-            'localhost', 
-            '5432', 
-            'postgres', 
+            'ift785',
+            'localhost',
+            '5432',
+            'postgres',
             'admin'
         )
 
         _mysql = MySQL(
             'ift785',
-            'localhost', 
-            '3306', 
+            'localhost',
+            '3306',
             'mysql',
             'admin'
         )
-        
+
         _csv = CSV('playground_events')
 
         return postgresql, _mysql, _csv
+
 
 def generate_test_data():
     db = CSV(database='playground_events')
@@ -400,8 +436,10 @@ def generate_test_data():
         )
         db.createAnnotation(annotation)
 
+
 def select_db(databases):
-    _input = input("Select a database to use: \n 0. PostgreSQL \n 1. MySQL \n 2. CSV \n")
+    _input = input(
+        "Select a database to use: \n 0. PostgreSQL \n 1. MySQL \n 2. CSV \n")
     try:
         db = databases[int(_input)]
     except Exception as e:
@@ -410,28 +448,39 @@ def select_db(databases):
         return select_db(databases)
     return db
 
+def getDataFromLastWeek(db : AccessDB):
+    today = DT.date.today()
+    week_ago = today - DT.timedelta(days=7)
+    date_str = week_ago.strftime("%Y-%m-%d")
+    test_date="2021-02-23"
+    print(date_str)
+    annotateList = db.getAllByDay(date_str)
+
+    return jsonable_encoder(annotateList)
+
 if __name__ == '__main__':
 
+
     annotation1 = Annotate(
-    id=101,
-    start=datetime.datetime.now(),
-    end=datetime.datetime.now(),
-    room='exterior',
-    subject='rest',
-    home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
-    activity_type='hygiene',
-    status='test'
+        id=101,
+        start=datetime.datetime.now(),
+        end=datetime.datetime.now(),
+        room='exterior',
+        subject='rest',
+        home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
+        activity_type='hygiene',
+        status='test'
     )
 
     annotation2 = Annotate(
-    id=44,
-    start=datetime.datetime.now(),
-    end=datetime.datetime.now(),
-    room='interior',
-    subject='rest',
-    home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
-    activity_type='entertainment',
-    status='test'
+        id=102,
+        start=datetime.datetime.now(),
+        end=datetime.datetime.now(),
+        room='interior',
+        subject='rest',
+        home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
+        activity_type='entertainment',
+        status='test'
     )
 
     databases = connect_databases(remote=True)
@@ -439,26 +488,29 @@ if __name__ == '__main__':
         db: AccessDB = select_db(databases)
         print('Connected to database: ', type(db).__name__)
 
-        # Test requests
-        # create
-        input('Press any key to add data')
-       # db.createAnnotation(annotation1)
-       # db.createAnnotation(annotation2)
+        l = getDataFromLastWeek(db)
 
-        # read
-        input('Press any key to read data')
-        response = db.readAnnotation(annotation1.id)
-        print(response)
+        # input('Press any key to add data')
+        # db.createAnnotation(annotation1)
+        # db.createAnnotation(annotation2)
 
-        # update
-        input('Press any key to update data')
-        annotation2.status = 'updated'
-        db.updateAnnotation(annotation2)
+        
+        # # read
+        # input('Press any key to read data')
+        # response = db.readAnnotation(annotation1.id)
+        # print(response)
 
-        # delete
-        input('Press any key to delete data')
-       # db.deleteAnnotation(annotation1.id)
+        # # update
+        # input('Press any key to update data')
+        # annotation2.status = 'updated'
+        # db.updateAnnotation(annotation2)
 
-        input('Press any key to delete data')
-      #  db.deleteAnnotation(annotation2.id)
+        # # delete
+        # input('Press any key to delete data')
+        # db.deleteAnnotation(annotation1.id)
+
+        # input('Press any key to delete data')
+        # db.deleteAnnotation(annotation2.id)
+        print(l)
+        print(len(l))
 
