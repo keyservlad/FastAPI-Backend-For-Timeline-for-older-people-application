@@ -19,6 +19,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
 from ORM import Annotations
+import datetime as DT
 # from models.annotate import Annotate
 
 
@@ -446,6 +447,15 @@ def select_db(databases):
         return select_db(databases)
     return db
 
+def getDataFromLastWeek(db : AccessDB):
+    today = DT.date.today()
+    week_ago = today - DT.timedelta(days=7)
+    date_str = week_ago.strftime("%Y-%m-%d")
+    test_date="2021-02-23"
+    print(date_str)
+    annotateList = db.getAllByDay(date_str)
+
+    return jsonable_encoder(annotateList)
 
 if __name__ == '__main__':
 
@@ -477,7 +487,7 @@ if __name__ == '__main__':
         db: AccessDB = select_db(databases)
         print('Connected to database: ', type(db).__name__)
 
-        l = db.getAllByDay("2021-02-23")
+        l = getDataFromLastWeek(db)
 
         # input('Press any key to add data')
         # db.createAnnotation(annotation1)

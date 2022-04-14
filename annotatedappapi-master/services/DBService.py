@@ -48,7 +48,7 @@ class DBService:
         Access all the annotation events of a day
         """
         try :
-            self.accessDB.getAllByDay(self, date)
+            self.accessDB.getAllByDay(self, date.now())
         except Exception as e:
             print(e)
         
