@@ -8,7 +8,7 @@ from pymongo import MongoClient
 from pymongo.command_cursor import CommandCursor
 from pymongo.errors import OperationFailure
 from pymongo.collection import Collection
-
+import pymongo
 from config.db import Settings
 from schemas.annotate_schemas import annotate_serializer, annotates_serializer
 class ConfigurationException(Exception):
@@ -18,11 +18,18 @@ class ConfigurationException(Exception):
 
 class AnnotateQueryService:
     def __init__(self):
-        client = MongoClient(
-            f'mongodb://{Settings().mongo_username}'
-            f':{quote_plus(Settings().mongo_password)}'
-            f'@{Settings().mongo_host}'
-            f':{Settings().mongo_port}/admin')
+       # client = MongoClient(
+       #     f'mongodb://{Settings().mongo_username}'
+       #     f':{quote_plus(Settings().mongo_password)}'
+       #     f'@{Settings().mongo_host}'
+       #     f':{Settings().mongo_port}/admin')
+
+        #  python -m pip install pymongo[srv]
+
+        client = pymongo.MongoClient("mongodb+srv://test1:gntestyes-F4f756@cluster0.rqf6z.mongodb.net/labellingapp?retryWrites=true&w=majority")
+
+
+
 
         self.annotate: Collection = client.labellingapp.annotateapp
         self.collection_name = client.labellingapp["annotateapp"]
@@ -65,7 +72,13 @@ class AnnotateQueryService:
 
     @staticmethod
     def add_tz_info(value: datetime.datetime):
-        return value.replace(tzinfo=tzlocal()).astimezone(tzoffset(None, 0))
+        if value:
+            print(value)
+            return value.replace(tzinfo=tzlocal()).astimezone(tzoffset(None, 0))
+        else:
+            value = datetime.datetime.now()
+            return value.replace(tzinfo=tzlocal()).astimezone(tzoffset(None, 0))
+        #return value.replace(tzinfo=tzlocal()).astimezone(tzoffset(None, 0))
 
     @staticmethod
     def map_annotate(annotate):
@@ -79,3 +92,5 @@ class AnnotateQueryService:
             AnnotateQueryService.add_tz_info(annotate['first_observation_date']),
             AnnotateQueryService.add_tz_info(annotate['last_observation_date']))
 
+    #AnnotateQueryService.add_tz_info(annotate['first_observation_date']),
+    #AnnotateQueryService.add_tz_info(annotate['last_observation_date']))
