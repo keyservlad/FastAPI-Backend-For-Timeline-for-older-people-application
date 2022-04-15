@@ -36,6 +36,10 @@ from schemas.annotate_schemas import annotate_serializer, annotates_serializer
 
 
 @dataclass
+class Activity:
+    label: str
+
+@dataclass
 class Annotate:
     id: int
     start: datetime.datetime
@@ -43,8 +47,9 @@ class Annotate:
     room: str
     subject: str
     home: str
-    activity_type: str
+    activity_type: Activity
     status: str
+
 
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
@@ -99,6 +104,26 @@ class AccessDB(ABC):
     def getAllByDay(self, date: str):
         """
         Get all annotations in the database, by date
+        """
+        pass
+
+    @abstractmethod
+    def createActivity(self, label: str):
+        """
+        Create an activity in the database.
+        """
+        pass
+    @abstractmethod
+    def updateActivity(self, label: str):
+        """
+        Update an annotation in the database, given its label.
+        """
+        pass
+
+    @abstractmethod
+    def deleteActivity(self, label: str):
+        """
+        Delete an activity in the database, given its label.
         """
         pass
 
