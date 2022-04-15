@@ -30,9 +30,6 @@ from pymongo.command_cursor import CommandCursor
 from pymongo.errors import OperationFailure
 from pymongo.collection import Collection
 import pymongo
-from config.db import Settings
-from models.annotate import Annotate
-from schemas.annotate_schemas import annotate_serializer, annotates_serializer
 
 
 @dataclass
@@ -108,22 +105,23 @@ class AccessDB(ABC):
         pass
 
     @abstractmethod
-    def createActivity(self, label: str):
+    def createActivity(self, activity: Activity):
         """
         Create an activity in the database.
         """
         pass
+
     @abstractmethod
-    def updateActivity(self, label: str):
+    def deleteActivity(self, activity: Activity):
         """
-        Update an annotation in the database, given its label.
+        Delete an activity in the database.
         """
         pass
 
     @abstractmethod
-    def deleteActivity(self, label: str):
+    def getAllActivity(self):
         """
-        Delete an activity in the database, given its label.
+        Get all activities.
         """
         pass
 
@@ -169,6 +167,24 @@ class MongoDB(AccessDB):
             return self.insert_home_annotate(annotate)
 
     def deleteAnnotation(self, id: int):
+        pass
+
+    def createActivity(self, activity: Activity):
+        """
+        Create an activity in the database.
+        """
+        pass
+
+    def deleteActivity(self, activity: Activity):
+        """
+        Delete an activity in the database.
+        """
+        pass
+
+    def getAllActivity(self):
+        """
+        Get all activities.
+        """
         pass
 
 class MySQL(AccessDB):
@@ -234,6 +250,36 @@ class MySQL(AccessDB):
         mycursor = self.db_conn.cursor()
         sql = "DELETE FROM annotations WHERE id = %s"
         param = (id, )
+        mycursor.execute(sql, param)
+        self.db_conn.commit()
+
+    def createActivity(self, activity: Activity):
+        """
+        Create an activity in the database.
+        """
+        mycursor = self.db_conn.cursor()
+        sql = "INSERT INTO activity (label) VALUES (%s)"
+        val = (activity.label, )
+        mycursor.execute(sql, val)
+        self.db_conn.commit()
+
+    def getAllActivity(self):
+        """
+        Get all activity in the database.
+        """
+        mycursor = self.db_conn.cursor()
+        sql = "SELECT * FROM activity"
+        mycursor.execute(sql)
+        myresult = mycursor.fetchall()
+        return myresult
+
+    def deleteActivity(self, activity: Activity):
+        """
+        Delete an activity from the database.
+        """
+        mycursor = self.db_conn.cursor()
+        sql = "DELETE FROM activity WHERE label = %s"
+        param = (activity.label, )
         mycursor.execute(sql, param)
         self.db_conn.commit()
     
@@ -337,6 +383,24 @@ class PostgreSQL(AccessDB):
         db.delete(obj)
         db.commit()
         return obj
+    
+    def createActivity(self, activity: Activity):
+        """
+        Create an activity in the database.
+        """
+        pass
+
+    def deleteActivity(self, activity: Activity):
+        """
+        Delete an activity in the database.
+        """
+        pass
+
+    def getAllActivity(self):
+        """
+        Get all activities.
+        """
+        pass
 
     def getAllByDay(self, date: str):
         pass
@@ -425,6 +489,24 @@ class CSV(AccessDB):
             datawriter.writeheader()
             datawriter.writerows(kept_rows)
         return 1
+
+    def createActivity(self, label: str):
+        """
+        Create an activity in the database.
+        """
+        pass
+
+    def deleteActivity(self, label: str):
+        """
+        Delete an activity in the database, given its label.
+        """
+        pass
+
+    def getAllActivity(self):
+        """
+        Get all activities.
+        """
+        pass
 
     def getAllByDay(self, date):
         all_annotate = []
@@ -519,7 +601,12 @@ def getDataFromLastWeek(db : AccessDB):
 
 if __name__ == '__main__':
 
-
+    activity1= Activity(
+        label= "hygiene"
+    )
+    activity2= Activity(
+        label= "entertainment"
+    )
     annotation1 = Annotate(
         id=101,
         start=datetime.datetime.now(),
@@ -527,7 +614,7 @@ if __name__ == '__main__':
         room='exterior',
         subject='rest',
         home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
-        activity_type='hygiene',
+        activity_type=activity1,
         status='test'
     )
 
@@ -538,7 +625,7 @@ if __name__ == '__main__':
         room='interior',
         subject='rest',
         home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
-        activity_type='entertainment',
+        activity_type=activity2,
         status='test'
     )
 
@@ -548,6 +635,13 @@ if __name__ == '__main__':
         print('Connected to database: ', type(db).__name__)
 
         l = getDataFromLastWeek(db)
+
+        """ db.createActivity(activity1)
+        print(db.getAllActivity())
+        db.deleteActivity(activity1)
+        print(db.getAllActivity()) """
+
+
 
         # input('Press any key to add data')
         # db.createAnnotation(annotation1)
@@ -570,6 +664,5 @@ if __name__ == '__main__':
 
         # input('Press any key to delete data')
         # db.deleteAnnotation(annotation2.id)
-        print(l)
-        print(len(l))
+        
 
