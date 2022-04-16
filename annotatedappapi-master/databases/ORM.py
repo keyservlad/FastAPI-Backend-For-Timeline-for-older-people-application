@@ -19,3 +19,6 @@ class Annotations(Base):
     end=Column(DateTime, index=False)
     activity_type= Column(String, index=False)
     status= Column(String, index=False)
+
+class Activity(Base):
+    label = Column(String, primary_key=True, index=True)
