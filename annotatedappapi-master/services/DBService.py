@@ -1,5 +1,5 @@
 from databases.Databases import AccessDB
-
+from models import Activity
 
 
 class DBService:
@@ -16,12 +16,12 @@ class DBService:
         except Exception as e:
             print(e)
 
-    def readAnnotation(self, annotation: dict):
+    def readAnnotation(self, id: int):
         """
         Get an annotation from the AccessDB.
         """
         try :
-            return self.accessDB.readAnnotation(annotation)
+            return self.accessDB.readAnnotation(id)
         except Exception as e:
             print(e)
 
@@ -48,7 +48,34 @@ class DBService:
         Access all the annotation events of a day
         """
         try :
-            self.accessDB.getAllByDay(self, date.now())
+            return self.accessDB.getAllByDay(self, date.now())
+        except Exception as e:
+            print(e)
+
+    def getAllActivity(self):
+        """
+        Get all activity from the AccessDB.
+        """
+        try :
+            return self.accessDB.getAllActivity()
+        except Exception as e:
+            print(e)
+    
+    def createActivity(self, activity: Activity):
+        """
+        Create an activity from the AccessDB.
+        """
+        try :
+            self.accessDB.createActivity(activity)
+        except Exception as e:
+            print(e)
+
+    def deleteActivity(self, activity: Activity):
+        """
+        Delete an activity from the AccessDB.
+        """
+        try :
+            self.accessDB.deleteActivity(activity)
         except Exception as e:
             print(e)
         
