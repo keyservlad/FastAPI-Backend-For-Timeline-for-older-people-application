@@ -8,6 +8,7 @@
 # PASSWORD_SQL : Sr25qzz4@nf36mB
 
 from ast import Str
+from cProfile import label
 import psycopg2
 import mysql.connector
 import csv
@@ -18,7 +19,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
-from ORM import Annotations
+from ORM import Annotations,Activity as Activities
 import datetime as DT
 # from models.annotate import Annotate
 from typing import TypeVar
@@ -301,7 +302,6 @@ class PostgreSQL(AccessDB):
             user=self.username,
             password=self.password
         )
-        print(pg)
         return pg
 
     def get_db(self):
@@ -388,19 +388,39 @@ class PostgreSQL(AccessDB):
         """
         Create an activity in the database.
         """
-        pass
+        db: Session = self.get_db()
+        item = db.query(Activities).filter(Activities.label == activity.label).first()
+        if item:
+            return
+        db_obj = Activities(
+            label=activity.label
+        )
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
 
     def deleteActivity(self, activity: Activity):
         """
         Delete an activity in the database.
         """
-        pass
+        db: Session = self.get_db()
+        item = db.query(Activities).filter(Activities.label == activity.label).first()
+        if not item:
+            print("Activity not found")
+            return
+        obj = db.query(Activities).get(activity.label)
+        db.delete(obj)
+        db.commit()
+        return obj
 
     def getAllActivity(self):
         """
         Get all activities.
         """
-        pass
+        db: Session = self.get_db()
+        obj=db.query(Activities).all()
+        return obj
 
     def getAllByDay(self, date: str):
         pass
@@ -416,8 +436,8 @@ class CSV(AccessDB):
         #path = 'databases/' + self.database + '.csv'
         print('path to csv database: ', path)
         # set fieldnames for csv file
-        csvreader = csv.DictReader(open("events.csv"))
-        self.fieldnames = csvreader.fieldnames
+      #  csvreader = csv.DictReader(open("events.csv"))
+       # self.fieldnames = csvreader.fieldnames
         return path
 
     def createAnnotation(self, annotation: Annotate):
@@ -607,6 +627,9 @@ if __name__ == '__main__':
     activity2= Activity(
         label= "entertainment"
     )
+    activity3= Activity(
+        label= "sortie"
+    )
     annotation1 = Annotate(
         id=101,
         start=datetime.datetime.now(),
@@ -634,14 +657,16 @@ if __name__ == '__main__':
         db: AccessDB = select_db(databases)
         print('Connected to database: ', type(db).__name__)
 
-        l = getDataFromLastWeek(db)
+       # l = getDataFromLastWeek(db)
 
         """ db.createActivity(activity1)
         print(db.getAllActivity())
         db.deleteActivity(activity1)
         print(db.getAllActivity()) """
 
-
+       # db.createActivity(activity3)
+       # db.deleteActivity(activity3)
+        data=db.getAllActivity()
 
         # input('Press any key to add data')
         # db.createAnnotation(annotation1)
