@@ -1,0 +1,19 @@
+stages:
+  - build
+
+
+variables:
+ IMAGE_NAME_backend: "ift785/annotatebackend"
+
+
+build:
+ image: docker:19.03
+ stage: build
+ services:
+  - name: docker:19.03-dind
+ script:
+  - docker login -u ift785 -p $hubPWD
+  - docker build  -f annotatedappapi-master/Dockerfile -t $IMAGE_NAME_backend .
+  - docker push $IMAGE_NAME_backend
+
+
