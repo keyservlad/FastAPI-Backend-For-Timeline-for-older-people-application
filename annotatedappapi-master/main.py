@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routes.annotate import router
+from routes.annotateController import router
 from config.db import Settings
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,4 +28,4 @@ if __name__ == "__main__":
     Entrypoint for development and debugging purpose.
     """
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=80)

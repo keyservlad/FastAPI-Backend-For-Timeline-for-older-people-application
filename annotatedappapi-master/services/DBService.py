@@ -1,5 +1,5 @@
 from databases.Databases import AccessDB
-from models import Activity
+from models.Activity import Activity
 
 
 class DBService:

@@ -2,6 +2,7 @@ import datetime
 from urllib.parse import quote_plus
 from typing import Optional, List, Tuple
 from enum import Enum
+from models.annotate import Annotate
 
 from dateutil.tz import tzlocal, tzoffset
 from pymongo import MongoClient

@@ -1,13 +1,23 @@
+import os
+from dotenv import load_dotenv
 from fastapi import APIRouter
 from fastapi import HTTPException
 from sqlalchemy import null
-from annotate import Annotate
-from annotate_query_services import AnnotateQueryService
-from Activity import Activity
+from models.annotate import Annotate
+from services.DBService import DBService
+from databases.Databases import AccessDB, PostgreSQL
+from models.Activity import Activity
 
-
+load_dotenv()
 router = APIRouter()
-service = AnnotateQueryService()
+accessDBTest : AccessDB = PostgreSQL(
+            os.getenv("POSTGRES_DB"),
+            os.getenv("POSTGRES_SERVER"),
+            os.getenv("POSTGRES_PORT"),
+            os.getenv("POSTGRES_USER"),
+            os.getenv("POSTGRES_PASSWORD")
+        )
+service = DBService(accessDBTest)
 
 @router.get('/annotations/id/{id}')
 def getAnnotation(id: int):
