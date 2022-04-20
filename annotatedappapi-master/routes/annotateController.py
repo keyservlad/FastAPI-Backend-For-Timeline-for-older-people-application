@@ -18,6 +18,8 @@ accessDBTest : AccessDB = PostgreSQL(
             os.getenv("POSTGRES_USER"),
             os.getenv("POSTGRES_PASSWORD")
         )
+
+
 service = DBService(accessDBTest)
 
 #body -> {date: "jj/mm/aaaa"}
@@ -62,7 +64,7 @@ def deleteAnnotation(id: int):
 @router.post('/activities', status_code=201)
 def addActivity(activity: Activity):
     try:
-        return null
+        return service.createActivity(activity)
     except Error:
         raise HTTPException(status_code=404, detail="Can't add an activity")
 
@@ -72,7 +74,7 @@ def addActivity(activity: Activity):
 @router.get('/activities')
 def getActivities():
     try:
-        return null
+        return service.getAllActivity()
     except Error:
         raise HTTPException(status_code=404, detail="No activity existing")
 
@@ -81,6 +83,6 @@ def getActivities():
 @router.delete('/activities/{label}')
 def deleteActivity(label: str):
     try:
-        return null
+        return service.deleteActivity(label)
     except Error:
         raise HTTPException(status_code=404, detail="Can't delete this activity")

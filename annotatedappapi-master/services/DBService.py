@@ -57,7 +57,10 @@ class DBService:
         Get all activity from the AccessDB.
         """
         try :
-            return self.accessDB.getAllActivity()
+            activities = []
+            for activity in self.accessDB.getAllActivity():
+                activities.append(activity)
+            return activities
         except Exception as e:
             print(e)
     
@@ -66,16 +69,17 @@ class DBService:
         Create an activity from the AccessDB.
         """
         try :
-            self.accessDB.createActivity(activity)
+            return self.accessDB.createActivity(activity)
         except Exception as e:
             print(e)
 
-    def deleteActivity(self, activity: Activity):
+    def deleteActivity(self, label: str):
         """
         Delete an activity from the AccessDB.
         """
         try :
-            self.accessDB.deleteActivity(activity)
+            # Probleme : les databases ont besoin de l'activité pour supprimer, mais seulement le label est spécifié.
+            pass
         except Exception as e:
             print(e)
         
