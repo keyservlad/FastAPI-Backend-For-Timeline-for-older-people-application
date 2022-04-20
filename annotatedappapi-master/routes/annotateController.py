@@ -1,6 +1,7 @@
+from aifc import Error
 import os
 from dotenv import load_dotenv
-from fastapi import APIRouter
+from fastapi import Body, APIRouter
 from fastapi import HTTPException
 from sqlalchemy import null
 from models.annotate import Annotate
@@ -19,39 +20,51 @@ accessDBTest : AccessDB = PostgreSQL(
         )
 service = DBService(accessDBTest)
 
-
+#body -> {date: "jj/mm/aaaa"}
 
 # Obtenir la liste des annotations
 @router.get('/annotations')
-def getAnnotations():
+def getAnnotations(payload: dict = Body(...)):
     try:
-        return null
-    except IndexError:
+        
+    except Error:
         raise HTTPException(status_code=404, detail="No annotation existing ")
 
-
+#enlever
 # Ajouter une annotation
-@router.post('/addAnnotation', status_code=201)
+@router.post('/annotations', status_code=201)
 def addAnnotation(annotation: Annotate):
-    return null
+    try:
+        return null
+    except Error:
+        raise HTTPException(status_code=404, detail="can't add annotation")
 
 
 # Modifier une annotation
-@router.put('/modifyAnnotation/id/{id}')
+@router.put('/annotations/{id}')
 def modifyAnnotation(id: int):
-    return null
+    try:
+        return null
+    except Error:
+        raise HTTPException(status_code=404, detail="Can't modify annotation")
 
 
 # Delete une annotation
-@router.delete('/deleteAnnotation/id/{id}')
+@router.delete('/annotations/{id}')
 def deleteAnnotation(id: int):
-    return null
+    try:
+        return null
+    except Error:
+        raise HTTPException(status_code=404, detail="Can't delete annotation")
 
 
 # Ajouter un type d'activité
-@router.post('/addActivity', status_code=201)
+@router.post('/activities', status_code=201)
 def addActivity(activity: Activity):
-    return null
+    try:
+        return null
+    except Error:
+        raise HTTPException(status_code=404, detail="Can't add an activity")
 
 
 
@@ -60,11 +73,14 @@ def addActivity(activity: Activity):
 def getActivities():
     try:
         return null
-    except IndexError:
+    except Error:
         raise HTTPException(status_code=404, detail="No activity existing")
 
 
 # Delete un type d'activité
-@router.delete('/deleteActivity/id/{id}')
-def deleteActivity(id: int):
-    return null
+@router.delete('/activities/{label}')
+def deleteActivity(label: str):
+    try:
+        return null
+    except Error:
+        raise HTTPException(status_code=404, detail="Can't delete this activity")
