@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
 
-class Activity(BaseModel):
-
-    activity_name: str
+@dataclass
+class Activity:
+    label: str

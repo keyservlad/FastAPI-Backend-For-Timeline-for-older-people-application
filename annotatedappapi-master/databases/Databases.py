@@ -19,7 +19,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
-from databases.ORM import Annotations,Activity as Activities
+from databases.ORM import Annotations, Activity as Activities
 import datetime as DT
 # from models.annotate import Annotate
 from typing import TypeVar
@@ -126,7 +126,6 @@ class AccessDB(ABC):
         """
         pass
 
-
 class MongoDB(AccessDB):
     def connect(self):
         client = pymongo.MongoClient("mongodb+srv://test1:gntestyes-F4f756@cluster0.rqf6z.mongodb.net/labellingapp?retryWrites=true&w=majority")
@@ -136,11 +135,9 @@ class MongoDB(AccessDB):
         self.annotate: Collection = client.home.annotate
         self.collection_name = client.home["annotate"]
         
-
     def createAnnotation(self, annotation: Annotate):
         _id = self.collection_name.insert_one(dict(annotation))
         return annotates_serializer(self.annotate.find({"_id":_id.inserted_id}))
-
 
     def readAnnotation(self, id: int):
         pipeline = [
@@ -286,7 +283,6 @@ class MySQL(AccessDB):
     
     def getAllByDay(self, date: str):
         pass
-
 
 class PostgreSQL(AccessDB):
 
@@ -583,7 +579,6 @@ def connect_databases(remote=True):
 
         return postgresql, _mysql, _csv
 
-
 def generate_test_data():
     db = CSV(database='playground_events')
     for i in range(1, 5):
@@ -596,7 +591,6 @@ def generate_test_data():
             home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088'
         )
         db.createAnnotation(annotation)
-
 
 def select_db(databases):
     _input = input(
