@@ -34,12 +34,12 @@ class DBService:
         except Exception as e:
             print(e)
         
-    def deleteAnnotation(self, annotation: dict):
+    def deleteAnnotation(self, id: int):
         """
         Delete an annotation from the AccessDB.
         """
         try :
-            self.accessDB.deleteAnnotation(annotation)
+            self.accessDB.deleteAnnotation(id)
         except Exception as e:
             print(e)
 
