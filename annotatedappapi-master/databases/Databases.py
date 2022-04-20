@@ -18,6 +18,7 @@ from pydantic.dataclasses import dataclass
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 from fastapi.encoders import jsonable_encoder
 from databases.ORM import Annotations, Activities
 from models.Activity import Activity
@@ -85,7 +86,7 @@ class AccessDB(ABC):
         pass
 
     @abstractmethod
-    def getAllByDay(self, date: str):
+    def getAllByDay(self, date: datetime.datetime):
         """
         Get all annotations in the database, by date
         """
@@ -267,7 +268,7 @@ class MySQL(AccessDB):
         mycursor.execute(sql, param)
         self.db_conn.commit()
     
-    def getAllByDay(self, date: str):
+    def getAllByDay(self, date: datetime.datetime):
         pass
 
 class PostgreSQL(AccessDB):
@@ -349,7 +350,7 @@ class PostgreSQL(AccessDB):
         item.activity_type=annotation.activity_type,
         item.status=annotation.status
         db.commit()
-        return item
+        return item.to_annotate()
 
     def deleteAnnotation(self, id: int):
         """
@@ -364,7 +365,7 @@ class PostgreSQL(AccessDB):
         obj = db.query(Annotations).get(id)
         db.delete(obj)
         db.commit()
-        return obj
+        return obj.to_annotate()
     
     def createActivity(self, activity: Activity):
         """
@@ -380,7 +381,7 @@ class PostgreSQL(AccessDB):
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
-        return db_obj
+        return db_obj.to_activity()
 
     def deleteActivity(self, activity: Activity):
         """
@@ -394,7 +395,7 @@ class PostgreSQL(AccessDB):
         obj = db.query(Activities).get(activity.label)
         db.delete(obj)
         db.commit()
-        return obj
+        return obj.to_activity()
 
     def getAllActivity(self):
         """
@@ -404,8 +405,13 @@ class PostgreSQL(AccessDB):
         obj=db.query(Activities).all()
         return obj
 
-    def getAllByDay(self, date: str):
-        pass
+    def getAllByDay(self, date: datetime.datetime):
+        dateOneMore = date + datetime.timedelta(days=1)
+        print(dateOneMore)
+        print(date)
+        db: Session = self.get_db()
+        items = db.query(Annotations).filter(and_(Annotations.start > date, Annotations.end < dateOneMore)).all()
+        return items
 
 class CSV(AccessDB):
 
@@ -510,7 +516,7 @@ class CSV(AccessDB):
         """
         pass
 
-    def getAllByDay(self, date):
+    def getAllByDay(self, date: datetime.datetime):
         all_annotate = []
         with open(self.db_conn, 'r') as csvfile:
             datareader = csv.DictReader(csvfile, delimiter=',')
@@ -589,13 +595,6 @@ def select_db(databases):
         return select_db(databases)
     return db
 
-def getDataFromLastWeek(db : AccessDB):
-    today = DT.date.today()
-    week_ago = today - DT.timedelta(days=7)
-    date_str = week_ago.strftime("%Y-%m-%d")
-    test_date="2021-02-23"
-    print(date_str)
-    annotateList = db.getAllByDay(date_str)
 
     return jsonable_encoder(annotateList)
 

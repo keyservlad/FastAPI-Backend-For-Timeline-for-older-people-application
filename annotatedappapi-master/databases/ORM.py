@@ -1,6 +1,9 @@
 from sqlalchemy import  Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from typing import Any
+from models.annotate import Annotate
+from models.Activity import Activity
+
 
 @as_declarative()
 class Base:
@@ -20,5 +23,21 @@ class Annotations(Base):
     activity_type= Column(String, index=False)
     status= Column(String, index=False)
 
+    def to_annotate(self):
+        return Annotate(
+            id=self.id,
+            start=self.start,
+            end=self.end,
+            room=self.room,
+            home=self.home,
+            activity_type=self.activity_type,
+            status=self.status,
+        )
+
 class Activities(Base):
     label = Column(String, primary_key=True, index=True)
+
+    def to_activity(self):
+        return Activity(
+            label = self.label,
+        )

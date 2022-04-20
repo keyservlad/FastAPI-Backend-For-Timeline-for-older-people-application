@@ -1,14 +1,12 @@
-from datetime import date, datetime
-from pydantic.dataclasses import dataclass
+from datetime import datetime
 from pydantic import BaseModel
 
-@dataclass
 class Annotate(BaseModel):
-    id: int
+    id: int = None
     start: datetime
     end: datetime
     room: str
-    subject: str
+    activity_type: str
     home: str
     status: str
 

@@ -1,5 +1,7 @@
 from databases.Databases import AccessDB
 from models.Activity import Activity
+import datetime
+
 
 
 class DBService:
@@ -12,7 +14,7 @@ class DBService:
         Create a new annotation from the AccessDB.
         """
         try :
-            self.accessDB.createAnnotation(annotation)
+            return self.accessDB.createAnnotation(annotation)
         except Exception as e:
             print(e)
 
@@ -30,7 +32,7 @@ class DBService:
         Update an annotation from the AccessDB.
         """
         try :
-            self.accessDB.updateAnnotation(annotation)
+            return self.accessDB.updateAnnotation(annotation)
         except Exception as e:
             print(e)
         
@@ -39,16 +41,18 @@ class DBService:
         Delete an annotation from the AccessDB.
         """
         try :
-            self.accessDB.deleteAnnotation(id)
+            return self.accessDB.deleteAnnotation(id)
         except Exception as e:
             print(e)
 
-    def getAnnotationsOfADay(self, date):
+    def getAnnotationsOfADay(self, date: str):
         """
         Access all the annotation events of a day
         """
         try :
-            return self.accessDB.getAllByDay(self, date.now())
+            dateParsed = datetime.datetime.strptime(date, "%Y-%m-%d")
+            week_ago = dateParsed - datetime.timedelta(days=7)
+            return self.accessDB.getAllByDay(week_ago)
         except Exception as e:
             print(e)
 
@@ -57,10 +61,7 @@ class DBService:
         Get all activity from the AccessDB.
         """
         try :
-            activities = []
-            for activity in self.accessDB.getAllActivity():
-                activities.append(activity)
-            return activities
+            return self.accessDB.getAllActivity()
         except Exception as e:
             print(e)
     
@@ -78,8 +79,10 @@ class DBService:
         Delete an activity from the AccessDB.
         """
         try :
-            # Probleme : les databases ont besoin de l'activité pour supprimer, mais seulement le label est spécifié.
-            pass
+            activity = Activity(
+                label=label,
+            )
+            return self.accessDB.deleteActivity(activity)
         except Exception as e:
             print(e)
         

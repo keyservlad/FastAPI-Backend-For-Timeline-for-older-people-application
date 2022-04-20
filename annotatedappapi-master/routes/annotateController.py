@@ -41,9 +41,8 @@ def getAnnotations(payload: dict = Body(...)):
 #enlever
 # Ajouter une annotation
 @router.post('/annotations', status_code=201)
-def addAnnotation(payload: dict = Body(...)):
+def addAnnotation(annotation: Annotate):
     try:
-        annotation = annotate_serializer(payload["annotation"])
         return service.createAnnotation(annotation)
     except Error:
         raise HTTPException(status_code=500, detail="can't add annotation")
@@ -51,9 +50,8 @@ def addAnnotation(payload: dict = Body(...)):
 
 # Modifier une annotation
 @router.put('/annotations/{id}')
-def modifyAnnotation(payload: dict = Body(...)):
+def modifyAnnotation(annotation: Annotate):
     try:
-        annotation = annotate_serializer(payload["annotation"])
         return service.updateAnnotation(annotation)
     except Error:
         raise HTTPException(status_code=500, detail="Can't modify annotation")
@@ -61,9 +59,8 @@ def modifyAnnotation(payload: dict = Body(...)):
 
 # Delete une annotation
 @router.delete('/annotations/{id}')
-def deleteAnnotation(payload: dict = Body(...)):
+def deleteAnnotation(id: int):
     try:
-        id = payload['id']
         return service.deleteAnnotation(id)
     except Error:
         raise HTTPException(status_code=500, detail="Can't delete annotation")
