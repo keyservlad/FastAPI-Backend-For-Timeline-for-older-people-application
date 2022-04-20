@@ -20,5 +20,5 @@ class Annotations(Base):
     activity_type= Column(String, index=False)
     status= Column(String, index=False)
 
-class Activity(Base):
+class Activities(Base):
     label = Column(String, primary_key=True, index=True)

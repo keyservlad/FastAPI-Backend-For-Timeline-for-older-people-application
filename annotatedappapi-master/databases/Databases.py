@@ -19,9 +19,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
-from databases.ORM import Annotations, Activity as Activities
+from databases.ORM import Annotations, Activities
+from models.Activity import Activity
+from models.annotate import Annotate
 import datetime as DT
-# from models.annotate import Annotate
+from schemas.annotate_schemas import *
 from typing import TypeVar
 from pydantic import BaseModel
 import pymongo
@@ -31,22 +33,6 @@ from pymongo.command_cursor import CommandCursor
 from pymongo.errors import OperationFailure
 from pymongo.collection import Collection
 import pymongo
-
-
-@dataclass
-class Activity:
-    label: str
-
-@dataclass
-class Annotate:
-    id: int
-    start: datetime.datetime
-    end: datetime.datetime
-    room: str
-    subject: str
-    home: str
-    activity_type: Activity
-    status: str
 
 
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)

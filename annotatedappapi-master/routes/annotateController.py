@@ -5,10 +5,10 @@ from fastapi import Body, APIRouter
 from fastapi import HTTPException
 from sqlalchemy import null
 from models.annotate import Annotate
+from models.Activity import Activity
+
 from services.DBService import DBService
 from databases.Databases import AccessDB, PostgreSQL
-from models.Activity import Activity
-from models.annotate import Annotate
 from schemas.annotate_schemas import annotate_serializer
 
 

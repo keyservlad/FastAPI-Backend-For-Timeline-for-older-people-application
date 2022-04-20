@@ -1,8 +1,9 @@
 from datetime import date, datetime
 from pydantic.dataclasses import dataclass
+from pydantic import BaseModel
 
 @dataclass
-class Annotate:
+class Annotate(BaseModel):
     id: int
     start: datetime
     end: datetime
@@ -10,6 +11,9 @@ class Annotate:
     subject: str
     home: str
     status: str
+
+
+    
 
 
     #def __repr__(self):
