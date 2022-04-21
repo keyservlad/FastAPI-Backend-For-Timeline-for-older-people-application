@@ -117,11 +117,10 @@ class MongoDB(AccessDB):
     def connect(self):
         client = pymongo.MongoClient("mongodb+srv://test1:gntestyes-F4f756@cluster0.rqf6z.mongodb.net/labellingapp?retryWrites=true&w=majority")
 
-        # client = pymongo.MongoClient(self.database)
 
         self.annotate: Collection = client.home.annotate
-        self.collection_name = client.home["annotate"]
-        
+        self.activity: Collection = client.home.activity
+
     def createAnnotation(self, annotation: Annotate):
         _id = self.collection_name.insert_one(dict(annotation))
         return annotates_serializer(self.annotate.find({"_id":_id.inserted_id}))
@@ -133,7 +132,7 @@ class MongoDB(AccessDB):
             },
             {
                 '$group': {
-                    '_id': {'id': '$id', 'start': '$start', 'end': '$end', 'room': '$room', 'hoom': '$home', 'activity_type': '$activity_type', 'status': '$status'}
+                    '_id': {'id': '$id', 'start': '$start', 'end': '$end', 'room': '$room', 'home': '$home', 'activity_type': '$activity_type', 'status': '$status'}
                 }
             }
         ]
@@ -144,7 +143,7 @@ class MongoDB(AccessDB):
             raise MongoDB(ex.details)
 
     def updateAnnotation(self, annotate: Annotate):
-        home_entry  = self.collection_name.find_one({"id": int})
+        home_entry  = self.collection_name.find_one({"id": annotate.id})
         if home_entry:
             self.collection_name.find_one_and_update({"id": annotate.id},{"$set":dict(annotate)})
             return annotate_serializer(self.collection_name.find_one({"id":id}))
@@ -152,25 +151,29 @@ class MongoDB(AccessDB):
             return self.insert_home_annotate(annotate)
 
     def deleteAnnotation(self, id: int):
-        pass
+        result = db.test.delete_one({'id': id})
+        return result.deleted_count
 
     def createActivity(self, activity: Activity):
-        """
-        Create an activity in the database.
-        """
-        pass
+        _id = self.collection_name.insert_one(dict(activity))
+        return annotates_serializer(self.annotate.find({"_id":_id.inserted_id}))
 
     def deleteActivity(self, activity: Activity):
-        """
-        Delete an activity in the database.
-        """
-        pass
+        result = db.test.delete_one({'label': activity.label})
+        return result.deleted_count
 
     def getAllActivity(self):
         """
         Get all activities.
         """
-        pass
+        return annotates_serializer(self.activity.find())
+
+    def getAllByDay(self, date: datetime.datetime):
+        dateOneMore = date + datetime.timedelta(days=1)
+        return annotates_serializer(self.annotate.find({"start": { 
+                          "$gte": date}
+                         }, {"end": { "$lt": dateOneMore }}))
+     
 
 class MySQL(AccessDB):
 

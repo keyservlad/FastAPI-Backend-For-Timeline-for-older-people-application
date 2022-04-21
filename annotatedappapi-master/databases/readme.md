@@ -39,3 +39,11 @@ POSTGRES_PORT=5432
 
 POSTGRES_DB=annamasante_annotate
 
+## MongoDB credentials
+
+pymongo.MongoClient("mongodb+srv://test1:gntestyes-F4f756@cluster0.rqf6z.mongodb.net/labellingapp?retryWrites=true&w=majority")
+
+# remplacer par lib de votre lab.
+
+Collection home.annotate
+Collection home.activity
