@@ -274,6 +274,7 @@ class PostgreSQL(AccessDB):
         Establish a connection with the PostgreSQL database using psycopg2.
         output postgresql connection
         """
+        self.db: Session = self.get_db()
         pg = psycopg2.connect(
             host=self.host,
             port=self.port,
@@ -297,8 +298,8 @@ class PostgreSQL(AccessDB):
         Create an annotation in the database.
         """
         # Implementation goes here.
-        db: Session = self.get_db()
-        obj = db.query(Annotations).order_by(Annotations.id.desc()).first()
+
+        obj = self.db.query(Annotations).order_by(Annotations.id.desc()).first()
         if obj:
             annotation.id = obj.id+1
         else:
@@ -313,9 +314,10 @@ class PostgreSQL(AccessDB):
             activity_type=annotation.activity_type,
             status=annotation.status
         )
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
+        self.db.add(db_obj)
+        self.db.commit()
+        self.db.refresh(db_obj)
+        self.db.close()
         return db_obj
 
     def readAnnotation(self, id: int):
@@ -323,8 +325,7 @@ class PostgreSQL(AccessDB):
         Read an annotation from the database, given its id.
         """
         # Implementation goes here.
-        db: Session = self.get_db()
-        item = db.query(Annotations).filter(Annotations.id == id).first()
+        item = self.db.query(Annotations).filter(Annotations.id == id).first()
         return item
 
     def updateAnnotation(self, annotation: Annotate):
@@ -332,8 +333,8 @@ class PostgreSQL(AccessDB):
         Update an annotation in the database, given its id and the new annotation
         """
         # Implementation goes here.
-        db: Session = self.get_db()
-        item = db.query(Annotations).filter(
+
+        item = self.db.query(Annotations).filter(
             Annotations.id == annotation.id).first()
         if not item:
             print("Annotation not found")
@@ -345,7 +346,7 @@ class PostgreSQL(AccessDB):
         item.end=annotation.end,
         item.activity_type=annotation.activity_type,
         item.status=annotation.status
-        db.commit()
+        self.db.commit()
         return item.to_annotate()
 
     def deleteAnnotation(self, id: int):
@@ -353,60 +354,54 @@ class PostgreSQL(AccessDB):
         Delete an annotation in the database, given its id.
         """
         # Implementation goes here.
-        db: Session = self.get_db()
-        item = db.query(Annotations).filter(Annotations.id == id).first()
+        item = self.db.query(Annotations).filter(Annotations.id == id).first()
         if not item:
             print("Annotation not found")
             return
-        obj = db.query(Annotations).get(id)
-        db.delete(obj)
-        db.commit()
+        obj = self.db.query(Annotations).get(id)
+        self.db.delete(obj)
+        self.db.commit()
         return obj.to_annotate()
     
     def createActivity(self, activity: Activity):
         """
         Create an activity in the database.
         """
-        db: Session = self.get_db()
-        item = db.query(Activities).filter(Activities.label == activity.label).first()
+        item = self.db.query(Activities).filter(Activities.label == activity.label).first()
         if item:
             return
         db_obj = Activities(
             label=activity.label
         )
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
+        self.db.add(db_obj)
+        self.db.commit()
+        self.db.refresh(db_obj)
         return db_obj.to_activity()
 
     def deleteActivity(self, activity: Activity):
         """
         Delete an activity in the database.
         """
-        db: Session = self.get_db()
-        item = db.query(Activities).filter(Activities.label == activity.label).first()
+        item = self.db.query(Activities).filter(Activities.label == activity.label).first()
         if not item:
             print("Activity not found")
             return
-        obj = db.query(Activities).get(activity.label)
-        db.delete(obj)
-        db.commit()
+        obj = self.db.query(Activities).get(activity.label)
+        self.db.delete(obj)
+        self.db.commit()
         return obj.to_activity()
 
     def getAllActivity(self):
         """
         Get all activities.
         """
-        db: Session = self.get_db()
-        obj=db.query(Activities).all()
+        obj=self.db.query(Activities).all()
         return obj
 
     def getAllByDay(self, date: datetime.datetime):
         dateOneMore = date + datetime.timedelta(days=1)
-        print(dateOneMore)
-        print(date)
-        db: Session = self.get_db()
-        items = db.query(Annotations).filter(and_(Annotations.start > date, Annotations.end < dateOneMore)).all()
+        items = self.db.query(Annotations).filter(and_(Annotations.start > date, Annotations.end < dateOneMore)).all()
+        self.db.close()
         return items
 
 class CSV(AccessDB):
