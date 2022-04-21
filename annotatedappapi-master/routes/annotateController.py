@@ -28,13 +28,10 @@ service = DBService(accessDBTest)
 #body -> {date: "jj/mm/aaaa"}
 
 # Obtenir la liste des annotations
-@router.get('/annotations')
-def getAnnotations(payload: dict = Body(...)):
+@router.get('/annotations/{date}')
+def getAnnotations(date: str):
     try:
-        if(payload["date"] is None):
-            raise ValueError
-        else:
-            return service.getAnnotationsOfADay(payload["date"])
+        return service.getAnnotationsOfADay(date)
     except Error:
         raise HTTPException(status_code=500, detail="Error retrieving annotations")
 
