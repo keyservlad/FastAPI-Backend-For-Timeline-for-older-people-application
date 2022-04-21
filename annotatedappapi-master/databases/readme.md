@@ -1,6 +1,6 @@
 # Dev databases connection
 
-2 databases were deployed to test the development of a system to connect to different types of databases. Here is the database connection information.
+2 databases were deployed to test the development of a system to connect to different types of databases. Here is the database connection information. These databases will be shutdown after the presentation so we pushed the credentiels to facilitate the development.
 
 ## MySQL credentials
 

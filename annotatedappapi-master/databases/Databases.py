@@ -1,11 +1,4 @@
 
-# ## MySQL credentials
-
-# DB_NAME_SQL : sherbrooke_ift785_annotations
-# HOST_SQL: mysql-sherbrooke.alwaysdata.net
-# PORT_SQL : 3306
-# USERNAME_SQL : 262938
-# PASSWORD_SQL : Sr25qzz4@nf36mB
 
 from ast import Str
 from cProfile import label
@@ -529,51 +522,6 @@ class CSV(AccessDB):
                     all_annotate.append(Annotate(id=int(row['id']), start=row['start'], end=row['end'], room=row['room'], subject=row['subject'], home=row['home'], activity_type="", status=""))
             return all_annotate
 
-def connect_databases(remote=True):
-
-    if remote:
-        postgresql = PostgreSQL(
-            'sherbrooke_ift785_annotations',
-            'postgresql-sherbrooke.alwaysdata.net',
-            '5432',
-            'sherbrooke',
-            'Sr25qzz4nf36mB'
-        )
-
-        _mysql = MySQL(
-            'sherbrooke_ift785_annotations',
-            'mysql-sherbrooke.alwaysdata.net',
-            '3306',
-            '262938',
-            'Sr25qzz4nf36mB'
-        )
-
-        # NOTE : CSV remove access is not implemented yet. It will search in the local filesystem.
-        _csv = CSV('events')
-
-        return postgresql, _mysql, _csv
-
-    else:
-        postgresql = PostgreSQL(
-            'ift785',
-            'localhost',
-            '5432',
-            'postgres',
-            'admin'
-        )
-
-        _mysql = MySQL(
-            'ift785',
-            'localhost',
-            '3306',
-            'mysql',
-            'admin'
-        )
-
-        _csv = CSV('playground_events')
-
-        return postgresql, _mysql, _csv
-
 def generate_test_data():
     db = CSV(database='playground_events')
     for i in range(1, 5):
@@ -601,75 +549,6 @@ def select_db(databases):
 
     return jsonable_encoder(annotateList)
 
-if __name__ == '__main__':
 
-    activity1= Activity(
-        label= "hygiene"
-    )
-    activity2= Activity(
-        label= "entertainment"
-    )
-    activity3= Activity(
-        label= "sortie"
-    )
-    annotation1 = Annotate(
-        id=101,
-        start=datetime.datetime.now(),
-        end=datetime.datetime.now(),
-        room='exterior',
-        subject='rest',
-        home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
-        activity_type=activity1,
-        status='test'
-    )
-
-    annotation2 = Annotate(
-        id=102,
-        start=datetime.datetime.now(),
-        end=datetime.datetime.now(),
-        room='interior',
-        subject='rest',
-        home='openhabianpi03-60962692-0d0d-41a3-a62b-1eddccd2a088',
-        activity_type=activity2,
-        status='test'
-    )
-
-    databases = connect_databases(remote=True)
-    while True:
-        db: AccessDB = select_db(databases)
-        print('Connected to database: ', type(db).__name__)
-
-       # l = getDataFromLastWeek(db)
-
-        """ db.createActivity(activity1)
-        print(db.getAllActivity())
-        db.deleteActivity(activity1)
-        print(db.getAllActivity()) """
-
-       # db.createActivity(activity3)
-       # db.deleteActivity(activity3)
-        data=db.getAllActivity()
-
-        # input('Press any key to add data')
-        # db.createAnnotation(annotation1)
-        # db.createAnnotation(annotation2)
-
-        
-        # # read
-        # input('Press any key to read data')
-        # response = db.readAnnotation(annotation1.id)
-        # print(response)
-
-        # # update
-        # input('Press any key to update data')
-        # annotation2.status = 'updated'
-        # db.updateAnnotation(annotation2)
-
-        # # delete
-        # input('Press any key to delete data')
-        # db.deleteAnnotation(annotation1.id)
-
-        # input('Press any key to delete data')
-        # db.deleteAnnotation(annotation2.id)
         
 
